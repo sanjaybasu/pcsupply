@@ -27,19 +27,19 @@ References:
 7. 	Macinko J, Starfield B, research LS-H services, 2003  undefined. The contribution of primary care systems to health outcomes within Organization for Economic Cooperation and Development (OECD) countries, 1970–1998. Wiley Online Libr. http://onlinelibrary.wiley.com/doi/10.1111/1475-6773.00149/full. Accessed March 19, 2018.
 8. 	Shi L, Macinko J, Starfield B, Politzer R, Xu J. Primary care, race, and mortality in US states. Soc Sci Med. 2005;61(1):65-75. doi:10.1016/J.SOCSCIMED.2004.11.056
 9. 	Shi L, Macinko J, Starfield B, Wulu J, Regan J, Politzer R. The relationship between primary care, income inequality, and mortality in US States, 1980-1995. J Am Board Fam Pract. 16(5):412-422. http://www.ncbi.nlm.nih.gov/pubmed/14645332. Accessed March 29, 2018.
-10. 	Shi L, Macinko J, Starfield B, Xu J, Politzer R. Primary Care, Income Inequality, and Stroke Mortality in the United States: A Longitudinal Analysis, 1985-1995. Stroke. 2003;34(8):1958-1964. doi:10.1161/01.STR.0000082380.80444.A9
-11. 	Shi L, Macinko J, Starfield B, et al. Primary care, infant mortality, and low birth weight in the states of the USA. J Epidemiol Community Health. 2004;58(5):374. doi:10.1136/JECH.2003.013078
-12. 	Shi L, Starfield B. The effect of primary care physician supply and income inequality on mortality among blacks and whites in US metropolitan areas. Am J Public Health. 2001;91(8):1246-1250. http://www.ncbi.nlm.nih.gov/pubmed/11499112. Accessed March 29, 2018.
-13. 	Case A, Deaton A. Rising morbidity and mortality in midlife among white non-Hispanic Americans in the 21st century. Proc Natl Acad Sci U S A. 2015;112(49):15078-15083. doi:10.1073/pnas.1518393112
-14. 	Chetty R, Stepner M, Abraham S, et al. The association between income and life expectancy in the United States, 2001-2014. JAMA - J Am Med Assoc. 2016;315(16):1750-1766. doi:10.1001/jama.2016.4226
-15. 	Dwyer-Lindgren L, Bertozzi-Villa A, Stubbs RW, et al. Trends and Patterns of Geographic Variation in Mortality From Substance Use Disorders and Intentional Injuries Among US Counties, 1980-2014. Jama. 2018;319(10):1013. doi:10.1001/jama.2018.0900
-16. 	Song Z, Rose S, Safran DG, Landon BE, Day MP, Chernew ME. Changes in Health Care Spending and Quality 4 Years into Global Payment. N Engl J Med. 2014;371(18):1704-1714. doi:10.1056/NEJMsa1404026
-17. 	McWilliams JM, Landon BE, Chernew ME. Changes in Health Care Spending and Quality for Medicare Beneficiaries Associated with a Commercial ACO Contract. JAMA. 2013;310(8). doi:10.1001/jama.2013.276302
-18. 	Schwartz AL, Chernew ME, Landon BE, McWilliams JM. Changes in Low-Value Services in Year 1 of the Medicare Pioneer Accountable Care Organization Program. JAMA Intern Med. 2015;2115(11):1. doi:10.1001/jamainternmed.2015.4525
-19. 	McWilliams JM, Hatfield LA, Chernew ME, Landon BE, Schwartz AL. Early Performance of Accountable Care Organizations in Medicare. N Engl J Med. April 2016:NEJMsa1600142. doi:10.1056/NEJMsa1600142
-20. 	Song Z, Landon BE. Controlling Health Care Spending — The Massachusetts Experiment. N Engl J Med. 2012;366(17):1560-1561. doi:10.1056/NEJMp1201261
-21. 	Dale SB, Ghosh A, Peikes DN, et al. Two-Year Costs and Quality in the Comprehensive Primary Care Initiative. N Engl J Med. 2016;374(24):2345-2356. doi:10.1056/NEJMsa1414953
-22. 	Bärnighausen T, Bloom DE. Financial incentives for return of service in underserved areas: a systematic review. BMC Health Serv Res. 2009;9(1):86. doi:10.1186/1472-6963-9-86
-23. 	Kaufman A. Theory vs Practice: Should Primary Care Practice Take on Social Determinants of Health Now? Yes. Ann Fam Med. 2016;14(2):100-101. doi:10.1370/afm.1915
-24. 	Berkowitz SA, Hulberg AC, Standish S, Reznor G, Atlas SJ. Addressing Unmet Basic Resource Needs as Part of Chronic Cardiometabolic Disease Management. JAMA Intern Med. 2017;177(2):244. doi:10.1001/jamainternmed.2016.7691
+10. Shi L, Macinko J, Starfield B, Xu J, Politzer R. Primary Care, Income Inequality, and Stroke Mortality in the United States: A Longitudinal Analysis, 1985-1995. Stroke. 2003;34(8):1958-1964. doi:10.1161/01.STR.0000082380.80444.A9
+11. Shi L, Macinko J, Starfield B, et al. Primary care, infant mortality, and low birth weight in the states of the USA. J Epidemiol Community Health. 2004;58(5):374. doi:10.1136/JECH.2003.013078
+12. Shi L, Starfield B. The effect of primary care physician supply and income inequality on mortality among blacks and whites in US metropolitan areas. Am J Public Health. 2001;91(8):1246-1250. http://www.ncbi.nlm.nih.gov/pubmed/11499112. Accessed March 29, 2018.
+13. Case A, Deaton A. Rising morbidity and mortality in midlife among white non-Hispanic Americans in the 21st century. Proc Natl Acad Sci U S A. 2015;112(49):15078-15083. doi:10.1073/pnas.1518393112
+14. Chetty R, Stepner M, Abraham S, et al. The association between income and life expectancy in the United States, 2001-2014. JAMA - J Am Med Assoc. 2016;315(16):1750-1766. doi:10.1001/jama.2016.4226
+15. Dwyer-Lindgren L, Bertozzi-Villa A, Stubbs RW, et al. Trends and Patterns of Geographic Variation in Mortality From Substance Use Disorders and Intentional Injuries Among US Counties, 1980-2014. Jama. 2018;319(10):1013. doi:10.1001/jama.2018.0900
+16. Song Z, Rose S, Safran DG, Landon BE, Day MP, Chernew ME. Changes in Health Care Spending and Quality 4 Years into Global Payment. N Engl J Med. 2014;371(18):1704-1714. doi:10.1056/NEJMsa1404026
+17. McWilliams JM, Landon BE, Chernew ME. Changes in Health Care Spending and Quality for Medicare Beneficiaries Associated with a Commercial ACO Contract. JAMA. 2013;310(8). doi:10.1001/jama.2013.276302
+18. Schwartz AL, Chernew ME, Landon BE, McWilliams JM. Changes in Low-Value Services in Year 1 of the Medicare Pioneer Accountable Care Organization Program. JAMA Intern Med. 2015;2115(11):1. doi:10.1001/jamainternmed.2015.4525
+19. McWilliams JM, Hatfield LA, Chernew ME, Landon BE, Schwartz AL. Early Performance of Accountable Care Organizations in Medicare. N Engl J Med. April 2016:NEJMsa1600142. doi:10.1056/NEJMsa1600142
+20. Song Z, Landon BE. Controlling Health Care Spending — The Massachusetts Experiment. N Engl J Med. 2012;366(17):1560-1561. doi:10.1056/NEJMp1201261
+21. Dale SB, Ghosh A, Peikes DN, et al. Two-Year Costs and Quality in the Comprehensive Primary Care Initiative. N Engl J Med. 2016;374(24):2345-2356. doi:10.1056/NEJMsa1414953
+22. Bärnighausen T, Bloom DE. Financial incentives for return of service in underserved areas: a systematic review. BMC Health Serv Res. 2009;9(1):86. doi:10.1186/1472-6963-9-86
+23. Kaufman A. Theory vs Practice: Should Primary Care Practice Take on Social Determinants of Health Now? Yes. Ann Fam Med. 2016;14(2):100-101. doi:10.1370/afm.1915
+24. Berkowitz SA, Hulberg AC, Standish S, Reznor G, Atlas SJ. Addressing Unmet Basic Resource Needs as Part of Chronic Cardiometabolic Disease Management. JAMA Intern Med. 2017;177(2):244. doi:10.1001/jamainternmed.2016.7691
 
