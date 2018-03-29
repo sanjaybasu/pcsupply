@@ -2,7 +2,9 @@
 Sanjay Basu1,2*, Seth A. Berkowitz3, Russell S. Phillips2
 
 1 Center for Primary Care and Outcomes Research and Center for Population Health Sciences, Departments of Medicine and of Health Research and Policy, Stanford University
+
 2 Center for Primary Care, Harvard Medical School
+
 3 Department of General Medicine and Clinical Epidemiology, University of North Carolina at Chapel Hill
 
 *basus@stanford.edu
