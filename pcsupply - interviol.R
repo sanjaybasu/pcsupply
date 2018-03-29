@@ -464,6 +464,7 @@ panel$mcare = c(scale(panel$mcare))
 panel$obese = c(scale(panel$obese))
 panel$tob = c(scale(panel$tob))
 panel$spec = c(scale(panel$spec))
+panel$inc = c(scale(panel$inc/1000))
 
 
 panel$urb = panel$urb>=5
