@@ -1,4 +1,4 @@
-# Primary respre and health outcomes in the United States
+# Primary care and health outcomes in the United States
 # (c) 2018, Sanjay Basu, basus@stanford.edu
 
 #install.packages("devtools")
@@ -36,7 +36,7 @@ list.files("data-raw/county")
 
 raw_src = "data-raw/county/ahrf2017.asc" # Raw data
 dic_src = "data-raw/county/ahrf2016-17.sas" # SAS dictionary file
-doc_src = "data-raw/county/AHRF 2016-2017 Technirespl Documentation.xlsx"
+doc_src = "data-raw/county/AHRF 2016-2017 Technitransl Documentation.xlsx"
 
 
 # Find out the line for the first field: F00001 ---------------------------
@@ -82,66 +82,69 @@ save(ahrf_county,file="ahrf_county")
 
 unlink(raw_src)
 
-# Download raw IHME resp files ---------------------------------------
-# See https://github.com/BuzzFeedNews/2017-05-us-health-respre/blob/master/index.Rmd
+#  raw trans files ---------------------------------------
+library(readr)
+trans05 <- read_delim("data-raw/county/traffic2005.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+trans_us = cbind(trans05[,3],trans05[,7])
+names(trans_us) <- c("fips","trans_2005")
 
-url = "http://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_USA_COUNTY_RESP_DISEASE_MORTALITY_1980_2014_NATIONAL_XLSX.zip"
-fil_zip = tempfile(fileext = ".zip")
 
-{
-  download.file(url, fil_zip)
-  dir.create("data-raw/county")
-  unzip(fil_zip, exdir = "data-raw/county", junkpaths = TRUE)
-}
-list.files("data-raw/county")
-
-raw_src = "data-raw/county/IHME_USA_COUNTY_RESP_DISEASE_MORTALITY_1980_2014_NATIONAL_Y2017M09D26.XLSX" # Raw data
-resp_us <- read_excel(raw_src, sheet = 1, skip = 3, col_names = FALSE) %>%
-  select(1:10)
-names(resp_us) <- c("place","fips","resp_1980","resp_1985","resp_1990","resp_1995","resp_2000","resp_2005","resp_2010","resp_2014")
-
-# Clean the FIPS codes, adding zeros where necessary ---------------------------------------
-resp_us <- resp_us %>%
-  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
-
-# Extract data for counties only ---------------------------------------
-resp_counties <- resp_us %>%
-  filter(grepl(",",place)) %>%
-  separate(place, into=c("place","state"), sep = ", ")
-
-resp_counties = resp_counties[1:3142,]
-# Select columns with life expectancy data and convert from text string with confidence intervals to numbers ---------------------------------------
-counties_clean <- resp_counties %>%
-  select(4:11) %>%
-  mutate_all(funs(as.numeric(substring(.,1,5))))
-
-# Create data frame with names and abbreviations for states and District of Columbia  ---------------------------------------
-states <- data_frame(state.name,state.abb)
-names(states) <- c("state","abb")
-dc <- data_frame("District of Columbia", "DC")
-names(dc) <- c("state","abb")
-states <- bind_rows(states,dc) 
-
-# Join that to the counties' names, states, and FIPS codes ---------------------------------------
-states_names <- resp_counties %>%
-  select(1:3) %>%
-  inner_join(states) %>%
-  mutate(place = paste0(place,", ",abb))
+trans_us = trans_us[1:1212,]
+# Select columns with mort data and convert from text string with confidence intervals to numbers ---------------------------------------
+counties_clean <- trans_us %>%
+  select(2) %>%
+  mutate_all(funs(as.numeric(substring(.,1,4))))
 
 # Recombine AHRF with processed life expectancy data ---------------------------------------
-resp_counties <- bind_cols(states_names,counties_clean) 
+trans_counties05 <- cbind(trans_us[,1],counties_clean) 
+names(trans_counties05) <- c("fips","trans_2005")
 
 
-# Linearly impute 2015 LE ----
-resp_counties$resp_2015 = resp_counties$resp_2014 + 1/4*(resp_counties$resp_2014-resp_counties$resp_2010)
+trans10 <- read_delim("data-raw/county/traffic2010.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+trans_us = cbind(trans10[,3],trans10[,7])
+names(trans_us) <- c("fips","trans_2010")
 
-# keep relevant years ----
-resp_counties <- resp_counties %>%
-  select(fips, resp_2005, resp_2010, resp_2015)
+
+trans_us = trans_us[1:977,]
+# Select columns with mort data and convert from text string with confidence intervals to numbers ---------------------------------------
+counties_clean <- trans_us %>%
+  select(2) %>%
+  mutate_all(funs(as.numeric(substring(.,1,4))))
+
+# Recombine AHRF with processed life expectancy data ---------------------------------------
+trans_counties10 <- cbind(trans_us[,1],counties_clean) 
+names(trans_counties10) <- c("fips","trans_2010")
+
+
+
+
+trans15 <- read_delim("data-raw/county/traffic2015.txt", "\t", escape_double = FALSE, trim_ws = TRUE)
+trans_us = cbind(trans15[,3],trans15[,7])
+names(trans_us) <- c("fips","trans_2015")
+
+
+trans_us = trans_us[1:978,]
+# Select columns with mort data and convert from text string with confidence intervals to numbers ---------------------------------------
+counties_clean <- trans_us %>%
+  select(2) %>%
+  mutate_all(funs(as.numeric(substring(.,1,4))))
+
+# Recombine AHRF with processed life expectancy data ---------------------------------------
+trans_counties15 <- cbind(trans_us[,1],counties_clean) 
+names(trans_counties15) <- c("fips","trans_2015")
+
+
+
+
+
+
+transtot <- left_join(trans_counties10,trans_counties05, by=c("fips"="fips"))
+transtot <- left_join(trans_counties15,transtot, by=c("fips"="fips"))
+
 
 # Save LE  ----------------------------------------------------------------
 
-save(resp_counties,file="resp_counties")
+save(transtot,file="trans_counties")
 
 
 
@@ -167,9 +170,9 @@ chrd <- chrd %>%
          airpol_2005 = as.numeric(`Air pollution - particulate matter_2005`),
          airpol_2010 = as.numeric(`Air pollution - particulate matter_2010`),
          airpol_2015 = airpol_2010 + 5/2*(as.numeric(`Air pollution - particulate matter_2012`) - as.numeric(`Air pollution - particulate matter_2010`)),
-         alcdrivemort_2005 = as.numeric(`Alcohol-impaired driving deaths_2008`)-5/2*(as.numeric(`Alcohol-impaired driving deaths_2010`)-as.numeric(`Alcohol-impaired driving deaths_2008`)),
-         alcdrivemort_2010 = as.numeric(`Alcohol-impaired driving deaths_2010`),
-         alcdrivemort_2015 = as.numeric(`Alcohol-impaired driving deaths_2015`),
+         trans_2005 = as.numeric(`Alcohol-impaired driving deaths_2008`)-5/2*(as.numeric(`Alcohol-impaired driving deaths_2010`)-as.numeric(`Alcohol-impaired driving deaths_2008`)),
+         trans_2010 = as.numeric(`Alcohol-impaired driving deaths_2010`),
+         trans_2015 = as.numeric(`Alcohol-impaired driving deaths_2015`),
          premort_2005 = as.numeric(`Premature death_2005`),
          premort_2010 = as.numeric(`Premature death_2010`),
          premort_2015 = premort_2010 + 5/4*(as.numeric(`Premature death_2014`)-as.numeric(`Premature death_2010`)),
@@ -239,7 +242,7 @@ setwd("~/Data/ahrf")
 
 
 load("~/Data/ahrf/ahrf_county")
-load("~/Data/ahrf/resp_counties")
+load("~/Data/ahrf/trans_counties")
 load("~/Data/ahrf/chrd")
 load("~/Data/ahrf/ctyurb")
 
@@ -259,12 +262,12 @@ ahrf_county %>%
          tgp_2015 = `F08860-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
-         inc_2005 = `F13226-05`, #  Per resppita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
+         inc_2005 = `F13226-05`, #  Per transpita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
          inc_2010 = `F13226-10`,
          inc_2015 = `F13226-15`,
          ed_2006 = `F14480-06`, # % Persons 25+ Yrs w/<HS Diploma  , See https://www.census.gov/programs-surveys/acs/data.html
          ed_2011 = `F14480-11`,
-         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per respp Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medirespre-Geographic-Variation/GV_PUF.html
+         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per transp Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Meditransre-Geographic-Variation/GV_PUF.html
          medct_2015 = `F15299-15`,
          eld_2005 = `F14083-05`, #  Population Estimate 65+        ,  Census County Char File  
          eld_2010 = `F14840-10`,
@@ -288,7 +291,7 @@ ahrf_county %>%
          pov_2005 = `F13321-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
          pov_2010 = `F13321-10`,
          pov_2015 = `F13321-15`,
-         spec_2005 = `F11215-05`, #       M.D.'s, Total Ptn respre Non-Fed                             ,  AMA Phys Master File     
+         spec_2005 = `F11215-05`, #       M.D.'s, Total Ptn transre Non-Fed                             ,  AMA Phys Master File     
          spec_2010 = `F11215-10`,
          spec_2015 = `F11215-15`, 
          hobed_2005 = `F08921-05`, #  Hospital Beds                  ,  AHA Survey Database
@@ -305,8 +308,8 @@ ahrf_county %>%
          pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005))/pop_2005*10000,  # PC providers per 10k pop
          pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010))/pop_2010*10000,
          pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015))/pop_2015*10000,
-         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiresplc.pl?cost1=1&year1=200001&year2=201501
-         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiresplc.pl?cost1=1.00&year1=200501&year2=201501
+         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpitranslc.pl?cost1=1&year1=200001&year2=201501
+         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpitranslc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
          ed_2005 = (as.integer(ed_2006)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10, # linear interp
          ed_2010 = (as.integer(ed_2011)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10,
@@ -402,7 +405,7 @@ ahrf_county <- ahrf_county %>%
 
 
 # Join data to the AHRF subset ----
-counties_data <- left_join(ahrf_county,resp_counties, by=c("fips"="fips"))
+counties_data <- left_join(ahrf_county,trans_counties, by=c("fips"="fips"))
 counties_data
 
 # Join data to the urban/rural subset ----
@@ -468,12 +471,13 @@ panel$inc = c(scale(panel$inc/1000))
 
 
 panel$urb = panel$urb>=5
-panel$resp = panel$resp*10
+panel$trans = panel$trans*10
 
-
-reg_pool = plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_pool = plm(trans~pc+
+                 urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_fe =  plm(trans~pc+
+                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
 panelyrdum <- mutate(panel,
@@ -481,7 +485,8 @@ panelyrdum <- mutate(panel,
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
+reg_fd =  plm(trans~pc+
+                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,

@@ -296,8 +296,8 @@ ahrf_county %>%
          hobed_2014 = `F08921-14`,
          unins_2010 = `F14751-10`, #  % <65 without Health Insurance ,  Census SAHIE             
          unins_2015 = `F15474-15`,
-         msubstre_2011 = `F15549-11`, #  Mdcre Enrllmnt, Agd & Dsbld Tot,  CMS Enroll Dashboard     
-         msubstre_2015 = `F15549-15`
+         mcare_2011 = `F15549-11`, #  Mdcre Enrllmnt, Agd & Dsbld Tot,  CMS Enroll Dashboard     
+         mcare_2015 = `F15549-15`
   ) %>% 
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
@@ -344,9 +344,9 @@ ahrf_county %>%
          unins_2005 = (as.integer(unins_2010)-(as.integer(unins_2015)-as.integer(unins_2010)))/10,
          unins_2010 = as.integer(unins_2010)/10,
          unins_2015 = as.integer(unins_2015)/10,
-         msubstre_2005 = (as.integer(msubstre_2011)-6/4*(as.integer(msubstre_2015)-as.integer(msubstre_2011)))/pop_2005*100,
-         msubstre_2010 = (as.integer(msubstre_2011)-1/4*(as.integer(msubstre_2015)-as.integer(msubstre_2011)))/pop_2010*100,
-         msubstre_2015 = as.integer(msubstre_2015)/pop_2015*100
+         mcare_2005 = (as.integer(mcare_2011)-6/4*(as.integer(mcare_2015)-as.integer(mcare_2011)))/pop_2005*100,
+         mcare_2010 = (as.integer(mcare_2011)-1/4*(as.integer(mcare_2015)-as.integer(mcare_2011)))/pop_2010*100,
+         mcare_2015 = as.integer(mcare_2015)/pop_2015*100
   ) -> ahrf_county
 ahrf_county[ahrf_county<0]=0
 #lapply(ahrf_county, summary)
@@ -396,9 +396,9 @@ ahrf_county <- ahrf_county %>%
          unins_2005,
          unins_2010,
          unins_2015,
-         msubstre_2005,
-         msubstre_2010,
-         msubstre_2015)
+         mcare_2005,
+         mcare_2010,
+         mcare_2015)
 
 
 # Join data to the AHRF subset ----
@@ -472,11 +472,9 @@ panel$subst = panel$subst*10
 
 
 
-reg_pool = plm(subst~pc+
-                 urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+msubstre+obese+tob+spec,
+reg_pool = plm(subst~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(subst~pc+
-                urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+msubstre+obese+tob+spec,
+reg_fe =  plm(subst~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
 panelyrdum <- mutate(panel,
@@ -484,8 +482,7 @@ panelyrdum <- mutate(panel,
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(subst~pc+
-                urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+msubstre+obese+tob+spec+y00+y05+y10,
+reg_fd =  plm(subst~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,

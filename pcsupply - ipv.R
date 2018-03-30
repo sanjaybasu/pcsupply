@@ -1,4 +1,4 @@
-# Primary respre and health outcomes in the United States
+# Primary care and health outcomes in the United States
 # (c) 2018, Sanjay Basu, basus@stanford.edu
 
 #install.packages("devtools")
@@ -36,7 +36,7 @@ list.files("data-raw/county")
 
 raw_src = "data-raw/county/ahrf2017.asc" # Raw data
 dic_src = "data-raw/county/ahrf2016-17.sas" # SAS dictionary file
-doc_src = "data-raw/county/AHRF 2016-2017 Technirespl Documentation.xlsx"
+doc_src = "data-raw/county/AHRF 2016-2017 Technical Documentation.xlsx"
 
 
 # Find out the line for the first field: F00001 ---------------------------
@@ -82,10 +82,10 @@ save(ahrf_county,file="ahrf_county")
 
 unlink(raw_src)
 
-# Download raw IHME resp files ---------------------------------------
-# See https://github.com/BuzzFeedNews/2017-05-us-health-respre/blob/master/index.Rmd
+# Download raw IHME ipv files ---------------------------------------
+# See https://github.com/BuzzFeedNews/2017-05-us-health-ipvre/blob/master/index.Rmd
 
-url = "http://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_USA_COUNTY_RESP_DISEASE_MORTALITY_1980_2014_NATIONAL_XLSX.zip"
+url = "http://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_USA_COUNTY_USE_INJ_MORTALITY_1980_2014_NATIONAL_XLSX.zip"
 fil_zip = tempfile(fileext = ".zip")
 
 {
@@ -95,23 +95,23 @@ fil_zip = tempfile(fileext = ".zip")
 }
 list.files("data-raw/county")
 
-raw_src = "data-raw/county/IHME_USA_COUNTY_RESP_DISEASE_MORTALITY_1980_2014_NATIONAL_Y2017M09D26.XLSX" # Raw data
-resp_us <- read_excel(raw_src, sheet = 1, skip = 3, col_names = FALSE) %>%
+raw_src = "data-raw/county/IHME_USA_COUNTY_USE_INJ_MORTALITY_1980_2014_NATIONAL_Y2018M03D13.xlsx" # Raw data
+ipv <- read_excel(raw_src, sheet = 4, skip = 3, col_names = FALSE) %>%
   select(1:10)
-names(resp_us) <- c("place","fips","resp_1980","resp_1985","resp_1990","resp_1995","resp_2000","resp_2005","resp_2010","resp_2014")
+names(ipv) <- c("place","fips","ipv_1980","ipv_1985","ipv_1990","ipv_1995","ipv_2000","ipv_2005","ipv_2010","ipv_2014")
 
 # Clean the FIPS codes, adding zeros where necessary ---------------------------------------
-resp_us <- resp_us %>%
+ipv <- ipv %>%
   mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
 
 # Extract data for counties only ---------------------------------------
-resp_counties <- resp_us %>%
+ipv_counties <- ipv %>%
   filter(grepl(",",place)) %>%
   separate(place, into=c("place","state"), sep = ", ")
 
-resp_counties = resp_counties[1:3142,]
+ipv_counties = ipv_counties[1:3142,]
 # Select columns with life expectancy data and convert from text string with confidence intervals to numbers ---------------------------------------
-counties_clean <- resp_counties %>%
+counties_clean <- ipv_counties %>%
   select(4:11) %>%
   mutate_all(funs(as.numeric(substring(.,1,5))))
 
@@ -123,25 +123,25 @@ names(dc) <- c("state","abb")
 states <- bind_rows(states,dc) 
 
 # Join that to the counties' names, states, and FIPS codes ---------------------------------------
-states_names <- resp_counties %>%
+states_names <- ipv_counties %>%
   select(1:3) %>%
   inner_join(states) %>%
   mutate(place = paste0(place,", ",abb))
 
 # Recombine AHRF with processed life expectancy data ---------------------------------------
-resp_counties <- bind_cols(states_names,counties_clean) 
+ipv_counties <- bind_cols(states_names,counties_clean) 
 
 
 # Linearly impute 2015 LE ----
-resp_counties$resp_2015 = resp_counties$resp_2014 + 1/4*(resp_counties$resp_2014-resp_counties$resp_2010)
+ipv_counties$ipv_2015 = ipv_counties$ipv_2014 + 1/4*(ipv_counties$ipv_2014-ipv_counties$ipv_2010)
 
 # keep relevant years ----
-resp_counties <- resp_counties %>%
-  select(fips, resp_2005, resp_2010, resp_2015)
+ipv_counties <- ipv_counties %>%
+  select(fips, ipv_2005, ipv_2010, ipv_2015)
 
 # Save LE  ----------------------------------------------------------------
 
-save(resp_counties,file="resp_counties")
+save(ipv_counties,file="ipv_counties")
 
 
 
@@ -239,7 +239,7 @@ setwd("~/Data/ahrf")
 
 
 load("~/Data/ahrf/ahrf_county")
-load("~/Data/ahrf/resp_counties")
+load("~/Data/ahrf/ipv_counties")
 load("~/Data/ahrf/chrd")
 load("~/Data/ahrf/ctyurb")
 
@@ -259,12 +259,12 @@ ahrf_county %>%
          tgp_2015 = `F08860-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
-         inc_2005 = `F13226-05`, #  Per resppita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
+         inc_2005 = `F13226-05`, #  Per ipvpita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
          inc_2010 = `F13226-10`,
          inc_2015 = `F13226-15`,
          ed_2006 = `F14480-06`, # % Persons 25+ Yrs w/<HS Diploma  , See https://www.census.gov/programs-surveys/acs/data.html
          ed_2011 = `F14480-11`,
-         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per respp Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medirespre-Geographic-Variation/GV_PUF.html
+         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per ipvp Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Mediipvre-Geographic-Variation/GV_PUF.html
          medct_2015 = `F15299-15`,
          eld_2005 = `F14083-05`, #  Population Estimate 65+        ,  Census County Char File  
          eld_2010 = `F14840-10`,
@@ -288,7 +288,7 @@ ahrf_county %>%
          pov_2005 = `F13321-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
          pov_2010 = `F13321-10`,
          pov_2015 = `F13321-15`,
-         spec_2005 = `F11215-05`, #       M.D.'s, Total Ptn respre Non-Fed                             ,  AMA Phys Master File     
+         spec_2005 = `F11215-05`, #       M.D.'s, Total Ptn ipvre Non-Fed                             ,  AMA Phys Master File     
          spec_2010 = `F11215-10`,
          spec_2015 = `F11215-15`, 
          hobed_2005 = `F08921-05`, #  Hospital Beds                  ,  AHA Survey Database
@@ -305,8 +305,8 @@ ahrf_county %>%
          pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005))/pop_2005*10000,  # PC providers per 10k pop
          pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010))/pop_2010*10000,
          pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015))/pop_2015*10000,
-         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiresplc.pl?cost1=1&year1=200001&year2=201501
-         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiresplc.pl?cost1=1.00&year1=200501&year2=201501
+         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiipvlc.pl?cost1=1&year1=200001&year2=201501
+         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiipvlc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
          ed_2005 = (as.integer(ed_2006)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10, # linear interp
          ed_2010 = (as.integer(ed_2011)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10,
@@ -402,7 +402,7 @@ ahrf_county <- ahrf_county %>%
 
 
 # Join data to the AHRF subset ----
-counties_data <- left_join(ahrf_county,resp_counties, by=c("fips"="fips"))
+counties_data <- left_join(ahrf_county,ipv_counties, by=c("fips"="fips"))
 counties_data
 
 # Join data to the urban/rural subset ----
@@ -468,12 +468,13 @@ panel$inc = c(scale(panel$inc/1000))
 
 
 panel$urb = panel$urb>=5
-panel$resp = panel$resp*10
+panel$ipv = panel$ipv*10
 
-
-reg_pool = plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_pool = plm(ipv~pc+
+                 urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_fe =  plm(ipv~pc+
+                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
 panelyrdum <- mutate(panel,
@@ -481,7 +482,8 @@ panelyrdum <- mutate(panel,
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
+reg_fd =  plm(ipv~pc+
+                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,

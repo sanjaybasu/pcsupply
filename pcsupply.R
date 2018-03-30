@@ -10,7 +10,8 @@
 #install.packages("stargazer")
 #install.packages("httr")
 #install.packages("tableone")
-#install.packages("Publish")
+#install.packages("mctest)
+#install.packages("olsrr")
 
 rm(list=ls())
 
@@ -444,9 +445,7 @@ clse = function(reg) {
 }
 
 
-# Regressions  ----
-# See https://rpubs.com/wsundstrom/t_panel
-
+# center and scale ----
 library(plm)
 library(stargazer)
 
@@ -472,20 +471,48 @@ panel$inc = c(scale(panel$inc/1000))
 panel$urb = panel$urb>=5
 panel$le = panel$le*365.25
 
-reg_pool = plm(le~pc+
-                 urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+mcare+obese+tob+spec,
+
+# address collinearity with VIFs----
+paneltest = (panel[complete.cases(panel),])
+paneltest = data.frame(paneltest[,3:25])
+x = as.matrix(paneltest[,1:15,17:23])
+y = as.matrix(paneltest[,16])
+library(mctest)
+omcdiag(x,y)
+imcdiag(x,y)
+
+library(olsrr)
+testmodel = lm(le~,
+               data = panel)
+ols_vif_tol(testmodel)
+
+testmodel = lm(le~pc+
+                 urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
+               data = panel)
+ols_vif_tol(testmodel)
+
+# Regressions  ----
+# See https://rpubs.com/wsundstrom/t_panel
+
+reg_pool = plm(le~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(le~pc+
-                urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+mcare+obese+tob+spec,
+
+
+reg_re =  plm(le~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+              data = panel, index =c("county", "time"), model = "random")
+reg_fe =  plm(le~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
+
+# Hausman test for re vs fe ----
+
+phtest(reg_fe,reg_re)
 
 panelyrdum <- mutate(panel,
                      y00 = as.numeric(time==2000),
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(le~pc+
-                urb+ed+medct+eld+fem+blk+his+unemp+poll+inc+pov+hobed+unins+mcare+obese+tob+spec+y00+y05+y10,
+reg_fd =  plm(le~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,
