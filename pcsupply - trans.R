@@ -405,7 +405,7 @@ ahrf_county <- ahrf_county %>%
 
 
 # Join data to the AHRF subset ----
-counties_data <- left_join(ahrf_county,trans_counties, by=c("fips"="fips"))
+counties_data <- left_join(ahrf_county,transtot, by=c("fips"="fips"))
 counties_data
 
 # Join data to the urban/rural subset ----

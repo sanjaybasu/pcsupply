@@ -471,9 +471,9 @@ panel$urb = panel$urb>=5
 panel$resp = panel$resp*10
 
 
-reg_pool = plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_pool = plm(resp~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_fe =  plm(resp~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
 panelyrdum <- mutate(panel,
@@ -481,7 +481,7 @@ panelyrdum <- mutate(panel,
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(resp~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
+reg_fd =  plm(resp~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,

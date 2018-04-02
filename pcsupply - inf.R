@@ -99,19 +99,82 @@ raw_src = "data-raw/county/IHME_USA_COUNTY_INFECT_DIS_MORT_1980_2014_NATIONAL_Y2
 infect_us <- read_excel(raw_src, sheet = 1, skip = 3, col_names = FALSE) %>%
   select(1:10)
 names(infect_us) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+infect_us2 <- read_excel(raw_src, sheet = 2, skip = 3, col_names = FALSE) %>%
+  select(1:10)
+names(infect_us2) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+infect_us3 <- read_excel(raw_src, sheet = 3, skip = 3, col_names = FALSE) %>%
+  select(1:10)
+names(infect_us3) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+infect_us4 <- read_excel(raw_src, sheet = 4, skip = 3, col_names = FALSE) %>%
+  select(1:10)
+names(infect_us4) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+infect_us5 <- read_excel(raw_src, sheet = 5, skip = 3, col_names = FALSE) %>%
+  select(1:10)
+names(infect_us5) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+infect_us6 <- read_excel(raw_src, sheet = 6, skip = 3, col_names = FALSE) %>%
+  select(1:10)
+names(infect_us6) <- c("place","fips","infect_1980","infect_1985","infect_1990","infect_1995","infect_2000","infect_2005","infect_2010","infect_2014")
+
 
 # Clean the FIPS codes, adding zeros where necessary ---------------------------------------
 infect_us <- infect_us %>%
+  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
+infect_us2 <- infect_us2 %>%
+  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
+infect_us3 <- infect_us3 %>%
+  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
+infect_us4 <- infect_us4 %>%
+  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
+infect_us5 <- infect_us5 %>%
+  mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
+infect_us6 <- infect_us6 %>%
   mutate(fips = ifelse(nchar(fips)==4|nchar(fips)==1,paste0("0",fips),fips))
 
 # Extract data for counties only ---------------------------------------
 infect_counties <- infect_us %>%
   filter(grepl(",",place)) %>%
   separate(place, into=c("place","state"), sep = ", ")
+infect_counties2 <- infect_us2 %>%
+  filter(grepl(",",place)) %>%
+  separate(place, into=c("place","state"), sep = ", ")
+infect_counties3 <- infect_us3 %>%
+  filter(grepl(",",place)) %>%
+  separate(place, into=c("place","state"), sep = ", ")
+infect_counties4 <- infect_us4 %>%
+  filter(grepl(",",place)) %>%
+  separate(place, into=c("place","state"), sep = ", ")
+infect_counties5 <- infect_us5 %>%
+  filter(grepl(",",place)) %>%
+  separate(place, into=c("place","state"), sep = ", ")
+infect_counties6 <- infect_us6 %>%
+  filter(grepl(",",place)) %>%
+  separate(place, into=c("place","state"), sep = ", ")
 
 infect_counties = infect_counties[1:3142,]
+infect_counties2 = infect_counties2[1:3142,]
+infect_counties3 = infect_counties3[1:3142,]
+infect_counties4 = infect_counties4[1:3142,]
+infect_counties5 = infect_counties5[1:3142,]
+infect_counties6 = infect_counties6[1:3142,]
+
+
 # Select columns with life expectancy data and convert from text string with confidence intervals to numbers ---------------------------------------
 counties_clean <- infect_counties %>%
+  select(4:11) %>%
+  mutate_all(funs(as.numeric(substring(.,1,5))))
+counties_clean2 <- infect_counties2 %>%
+  select(4:11) %>%
+  mutate_all(funs(as.numeric(substring(.,1,5))))
+counties_clean3 <- infect_counties3 %>%
+  select(4:11) %>%
+  mutate_all(funs(as.numeric(substring(.,1,5))))
+counties_clean4 <- infect_counties4 %>%
+  select(4:11) %>%
+  mutate_all(funs(as.numeric(substring(.,1,5))))
+counties_clean5 <- infect_counties5 %>%
+  select(4:11) %>%
+  mutate_all(funs(as.numeric(substring(.,1,5))))
+counties_clean6 <- infect_counties6 %>%
   select(4:11) %>%
   mutate_all(funs(as.numeric(substring(.,1,5))))
 
@@ -122,6 +185,8 @@ dc <- data_frame("District of Columbia", "DC")
 names(dc) <- c("state","abb")
 states <- bind_rows(states,dc) 
 
+counties_clean_tot = counties_clean+counties_clean2+counties_clean3+counties_clean4+counties_clean5+counties_clean6
+  
 # Join that to the counties' names, states, and FIPS codes ---------------------------------------
 states_names <- infect_counties %>%
   select(1:3) %>%
@@ -129,7 +194,7 @@ states_names <- infect_counties %>%
   mutate(place = paste0(place,", ",abb))
 
 # Recombine AHRF with processed life expectancy data ---------------------------------------
-infect_counties <- bind_cols(states_names,counties_clean) 
+infect_counties <- bind_cols(states_names,counties_clean_tot) 
 
 
 # Linearly impute 2015 LE ----
@@ -471,9 +536,9 @@ panel$urb = panel$urb>=5
 panel$infect = panel$infect*10
 
 
-reg_pool = plm(infect~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_pool = plm(infect~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
                data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(infect~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1),
+reg_fe =  plm(infect~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
               data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
 panelyrdum <- mutate(panel,
@@ -481,7 +546,7 @@ panelyrdum <- mutate(panel,
                      y05 = as.numeric(time==2005),
                      y10 = as.numeric(time==2010))
 
-reg_fd =  plm(infect~lag(pc,1)+lag(urb,1)+lag(ed,1)+lag(medct,1)+lag(fem,1)+lag(blk,1)+lag(his,1)+lag(unemp,1)+lag(poll,1)+lag(pov,1)+lag(hobed,1)+lag(mcare,1)+lag(obese,1)+lag(tob,1)+lag(spec,1)+y00+y05+y10,
+reg_fd =  plm(infect~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
               data = panelyrdum, index =c("county", "time"), model = "fd")
 
 stargazer(reg_fe, reg_fd,
