@@ -239,7 +239,7 @@ setwd("~/Data/ahrf")
 
 
 load("~/Data/ahrf/ahrf_county")
-load("~/Data/ahrf/ipv_counties")
+load("~/Data/ahrf/transtot")
 load("~/Data/ahrf/chrd")
 load("~/Data/ahrf/ctyurb")
 
@@ -251,20 +251,23 @@ ahrf_county %>%
          fips = F00002, 
          gim_2005 = `F11209-05`, #    Gnrl Int Med, PC, Office Based 
          tgp_2005 = `F08860-05`, #    MD's, Tot Gen Pract, PC,Off Bsd 
+         ped_2005 = `F11706-05`, #    Peds, Tot PC, Off Bsd
          pop_2005 = `F11984-05`, 
          gim_2010 = `F11209-10`,
          tgp_2010 = `F08860-10`,
+         ped_2010 = `F11706-10`,
          pop_2010 = `F04530-10`, 
          gim_2015 = `F11209-15`,
          tgp_2015 = `F08860-15`,
+         ped_2015 = `F11706-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
-         inc_2005 = `F13226-05`, #  Per ipvpita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
+         inc_2005 = `F13226-05`, #   Median Household Income             , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
          inc_2010 = `F13226-10`,
          inc_2015 = `F13226-15`,
          ed_2006 = `F14480-06`, # % Persons 25+ Yrs w/<HS Diploma  , See https://www.census.gov/programs-surveys/acs/data.html
          ed_2011 = `F14480-11`,
-         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per ipvp Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Mediipvre-Geographic-Variation/GV_PUF.html
+         medct_2010 = `F15299-10`, #  Stan,Risk-Adj Per Cap Medcr Cst,  See https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Geographic-Variation/GV_PUF.html
          medct_2015 = `F15299-15`,
          eld_2005 = `F14083-05`, #  Population Estimate 65+        ,  Census County Char File  
          eld_2010 = `F14840-10`,
@@ -288,7 +291,7 @@ ahrf_county %>%
          pov_2005 = `F13321-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
          pov_2010 = `F13321-10`,
          pov_2015 = `F13321-15`,
-         spec_2005 = `F11215-05`, #       M.D.'s, Total Ptn ipvre Non-Fed                             ,  AMA Phys Master File     
+         spec_2005 = `F11215-05`, #        M.D.'s, Total Ptn Care Non-Fed                              ,  AMA Phys Master File     
          spec_2010 = `F11215-10`,
          spec_2015 = `F11215-15`, 
          hobed_2005 = `F08921-05`, #  Hospital Beds                  ,  AHA Survey Database
@@ -302,11 +305,17 @@ ahrf_county %>%
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005))/pop_2005*10000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010))/pop_2010*10000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015))/pop_2015*10000,
-         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiipvlc.pl?cost1=1&year1=200001&year2=201501
-         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpiipvlc.pl?cost1=1.00&year1=200501&year2=201501
+         fp_2005 = as.integer(tgp_2005)/pop_2005*10000,
+         fp_2010 = as.integer(tgp_2010)/pop_2005*10000,
+         fp_2015 = as.integer(tgp_2015)/pop_2005*10000,
+         gim_2005 = as.integer(gim_2005)/pop_2005*10000,
+         gim_2010 = as.integer(gim_2010)/pop_2005*10000,
+         gim_2015 = as.integer(gim_2015)/pop_2005*10000,
+         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*10000,  # PC providers per 10k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*10000,
+         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*10000,
+         inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
+         inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
          ed_2005 = (as.integer(ed_2006)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10, # linear interp
          ed_2010 = (as.integer(ed_2011)-0.2*(as.integer(ed_2011)-as.integer(ed_2006)))/10,
@@ -354,6 +363,12 @@ ahrf_county[ahrf_county<0]=0
 ahrf_county <- ahrf_county %>%
   select(county,
          fips,
+         fp_2005,
+         fp_2010,
+         fp_2015,
+         gim_2005,
+         gim_2010,
+         gim_2015,
          pc_2005,
          pc_2010,
          pc_2015,
@@ -402,7 +417,7 @@ ahrf_county <- ahrf_county %>%
 
 
 # Join data to the AHRF subset ----
-counties_data <- left_join(ahrf_county,ipv_counties, by=c("fips"="fips"))
+counties_data <- left_join(ahrf_county,transtot, by=c("fips"="fips"))
 counties_data
 
 # Join data to the urban/rural subset ----
@@ -421,32 +436,15 @@ paneldata = paneldata %>%
 
 # Reshape wide to long; note that guam and puerto rico don't have LE available and make up most of the NA's, so need to exclude them when counting NA's for 50 states+DC ----
 paneldata = data.frame(paneldata)
-panel = reshape(paneldata, varying =dput(names(paneldata[,2:70])),
+panel = reshape(paneldata, varying =dput(names(paneldata[,2:76])),
                 direction="long",idvar="county",sep="_")
 
 
 
-# clustered SEs, clustered on "group"... could also cluster on "time" ----
-# compute Stata-like degrees of freedom adjustment for number of groups
-# See http://www.richard-bluhm.com/clustered-ses-in-r-and-stata-2/
 
-clse = function(reg) { 
-  # index(reg, "id") returns the id or entity variable vector 
-  G = length(unique(index(reg,"id")))
-  N = length(index(reg,"id"))
-  dfa = (G/(G - 1))   # note Bluhm multiplies this by finite-sample df adjustment
-  rob = sqrt(diag(dfa*vcovHC(reg, method="arellano", type = "HC1", 
-                             cluster = "group")))
-  return(rob)
-}
-
-
-# Regressions  ----
-# See https://rpubs.com/wsundstrom/t_panel
-
+# center and scale ----
 library(plm)
 library(stargazer)
-
 
 panel$pc = c(scale(panel$pc))
 panel$ed = c(scale(panel$ed))
@@ -470,32 +468,17 @@ panel$inc = c(scale(panel$inc/1000))
 panel$urb = panel$urb>=5
 panel$ipv = panel$ipv*10
 
-reg_pool = plm(ipv~pc+
-                 urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
-               data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(ipv~pc+
-                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
-              data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
-panelyrdum <- mutate(panel,
-                     y00 = as.numeric(time==2000),
-                     y05 = as.numeric(time==2005),
-                     y10 = as.numeric(time==2010))
 
-reg_fd =  plm(ipv~pc+
-                urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
-              data = panelyrdum, index =c("county", "time"), model = "fd")
+# Regressions  ----
 
-stargazer(reg_fe, reg_fd,
-          se=list(clse(reg_fe),clse(reg_fd)),
-          title="FE vs FD", type="text",
-          column.labels=c("FE", "FD"), 
-          df=FALSE, digits=4)
+library(lme4)
+reg_meu = lmer(ipv~pc+ (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_meu)
+confint(reg_meu,method="Wald")
 
-# if you want fixed effects to be displayed for every county and year, uncomment these:
-# fixef(reg_fe,effect="individual")
-# fixef(reg_fe,effect="time")
-
-# do other chrd and ihme outcomes
-# do placebo tests
-
+reg_mes = lmer(ipv~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_mes)
+confint(reg_mes,method="Wald")
