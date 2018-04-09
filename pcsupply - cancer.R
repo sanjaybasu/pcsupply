@@ -231,7 +231,6 @@ ctyurb <- ctyurb %>%
 save(ctyurb,file="ctyurb")
 
 
-
 # Organize into panel data  ---------------------------------------
 
 rm(list=ls())
@@ -252,15 +251,18 @@ ahrf_county %>%
          fips = F00002, 
          gim_2005 = `F11209-05`, #    Gnrl Int Med, PC, Office Based 
          tgp_2005 = `F08860-05`, #    MD's, Tot Gen Pract, PC,Off Bsd 
+         ped_2005 = `F11706-05`, #    Peds, Tot PC, Off Bsd
          pop_2005 = `F11984-05`, 
          gim_2010 = `F11209-10`,
          tgp_2010 = `F08860-10`,
+         ped_2010 = `F11706-10`,
          pop_2010 = `F04530-10`, 
          gim_2015 = `F11209-15`,
          tgp_2015 = `F08860-15`,
+         ped_2015 = `F11706-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
-         inc_2005 = `F13226-05`, #  Per Capita Personal Income     , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
+         inc_2005 = `F13226-05`, #   Median Household Income             , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
          inc_2010 = `F13226-10`,
          inc_2015 = `F13226-15`,
          ed_2006 = `F14480-06`, # % Persons 25+ Yrs w/<HS Diploma  , See https://www.census.gov/programs-surveys/acs/data.html
@@ -286,12 +288,12 @@ ahrf_county %>%
          poll_2006 = `F15338-06`, #  Days w/8-hr Avg Ozone ovr NAAQS,  CDC EPH Tracking Network 
          poll_2010 = `F15338-10`,
          poll_2012 = `F15338-12`,
-         pov_2005 = `F11215-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
-         pov_2010 = `F11215-10`,
-         pov_2015 = `F11215-15`,
-         spec_2005 = `F11724-05`, #       M.D.'s, Total Ptn Care Non-Fed                             ,  AMA Phys Master File     
-         spec_2010 = `F11724-10`,
-         spec_2015 = `F11724-15`, 
+         pov_2005 = `F13321-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
+         pov_2010 = `F13321-10`,
+         pov_2015 = `F13321-15`,
+         spec_2005 = `F11215-05`, #        M.D.'s, Total Ptn Care Non-Fed                              ,  AMA Phys Master File     
+         spec_2010 = `F11215-10`,
+         spec_2015 = `F11215-15`, 
          hobed_2005 = `F08921-05`, #  Hospital Beds                  ,  AHA Survey Database
          hobed_2010 = `F08921-10`, 
          hobed_2014 = `F08921-14`,
@@ -303,9 +305,15 @@ ahrf_county %>%
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005))/pop_2005*10000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010))/pop_2010*10000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015))/pop_2015*10000,
+         fp_2005 = as.integer(tgp_2005)/pop_2005*10000,
+         fp_2010 = as.integer(tgp_2010)/pop_2005*10000,
+         fp_2015 = as.integer(tgp_2015)/pop_2005*10000,
+         gim_2005 = as.integer(gim_2005)/pop_2005*10000,
+         gim_2010 = as.integer(gim_2010)/pop_2005*10000,
+         gim_2015 = as.integer(gim_2015)/pop_2005*10000,
+         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*10000,  # PC providers per 10k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*10000,
+         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*10000,
          inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
          inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
@@ -355,6 +363,12 @@ ahrf_county[ahrf_county<0]=0
 ahrf_county <- ahrf_county %>%
   select(county,
          fips,
+         fp_2005,
+         fp_2010,
+         fp_2015,
+         gim_2005,
+         gim_2010,
+         gim_2015,
          pc_2005,
          pc_2010,
          pc_2015,
@@ -422,32 +436,15 @@ paneldata = paneldata %>%
 
 # Reshape wide to long; note that guam and puerto rico don't have LE available and make up most of the NA's, so need to exclude them when counting NA's for 50 states+DC ----
 paneldata = data.frame(paneldata)
-panel = reshape(paneldata, varying =dput(names(paneldata[,2:70])),
+panel = reshape(paneldata, varying =dput(names(paneldata[,2:76])),
                 direction="long",idvar="county",sep="_")
 
 
 
-# clustered SEs, clustered on "group"... could also cluster on "time" ----
-# compute Stata-like degrees of freedom adjustment for number of groups
-# See http://www.richard-bluhm.com/clustered-ses-in-r-and-stata-2/
 
-clse = function(reg) { 
-  # index(reg, "id") returns the id or entity variable vector 
-  G = length(unique(index(reg,"id")))
-  N = length(index(reg,"id"))
-  dfa = (G/(G - 1))   # note Bluhm multiplies this by finite-sample df adjustment
-  rob = sqrt(diag(dfa*vcovHC(reg, method="arellano", type = "HC1", 
-                             cluster = "group")))
-  return(rob)
-}
-
-
-# Regressions  ----
-# See https://rpubs.com/wsundstrom/t_panel
-
+# center and scale ----
 library(plm)
 library(stargazer)
-
 
 panel$pc = c(scale(panel$pc))
 panel$ed = c(scale(panel$ed))
@@ -471,29 +468,104 @@ panel$inc = c(scale(panel$inc/1000))
 panel$urb = panel$urb>=5
 panel$ca = panel$ca*10
 
-reg_pool = plm(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
-               data = panel, index =c("county", "time"), model = "pooling")
-reg_fe =  plm(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
-              data = panel, index =c("county", "time"), model = "within", effect="twoways")
 
-panelyrdum <- mutate(panel,
-                     y00 = as.numeric(time==2000),
-                     y05 = as.numeric(time==2005),
-                     y10 = as.numeric(time==2010))
 
-reg_fd =  plm(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec+y00+y05+y10,
-              data = panelyrdum, index =c("county", "time"), model = "fd")
+# Regressions  ----
 
-stargazer(reg_fe, reg_fd,
-          se=list(clse(reg_fe),clse(reg_fd)),
-          title="FE vs FD", type="text",
-          column.labels=c("FE", "FD"), 
-          df=FALSE, digits=4)
+library(lme4)
+reg_meu = lmer(ca~pc+ (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_meu)
+confint(reg_meu,method="Wald")
 
-# if you want fixed effects to be displayed for every county and year, uncomment these:
-# fixef(reg_fe,effect="individual")
-# fixef(reg_fe,effect="time")
+reg_mes = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_mes)
+confint(reg_mes,method="Wald")
 
-# do other chrd and ihme outcomes
-# do placebo tests
+
+paneltest = pdata.frame(panel,index = c("county","time"))
+mylag <- function(x,lag) {
+  c(rep(NA,lag),head(x,-lag))
+}
+dd=transform(paneltest,lagpc1=mylag(pc,1))
+dd$pc[dd$time==2005]='NA'
+
+reg_mel = lmer(ca~lagpc1+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+lagpc1| county)+ (1|time) ,
+               data = dd)
+summary(reg_mel)
+confint(reg_mel,method="Wald") 
+
+
+
+
+reg_mef = lmer(ca~fp+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_mef)
+confint(reg_mef,method="Wald")
+
+
+
+reg_meg = lmer(ca~gim+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panel)
+summary(reg_meg)
+confint(reg_meg,method="Wald")
+
+
+
+
+panelurb = panel[panel$urb==1,]
+reg_meu = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panelurb)
+summary(reg_meu)
+confint(reg_meu,method="Wald")
+
+panelrur = panel[panel$urb==0,]
+reg_mer = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = panelrur)
+summary(reg_mer)
+confint(reg_mer,method="Wald")
+
+
+
+panellopov = panel[panel$pov<(-0.1584),]
+reg_melp = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = panellopov)
+summary(reg_melp)
+confint(reg_melp,method="Wald")
+
+panelhipov = panel[panel$pov>(-0.1584),]
+reg_mehp = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = panelhipov)
+summary(reg_mehp)
+confint(reg_mehp,method="Wald")
+
+
+
+panelloblk = panel[panel$blk<(-0.47508),]
+reg_melb = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = panelloblk)
+summary(reg_melb)
+confint(reg_melb,method="Wald")
+
+panelhiblk = panel[panel$blk>(-0.47508),]
+reg_mehb = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = panelhiblk)
+summary(reg_mehb)
+confint(reg_mehb,method="Wald")
+
+
+
+panellohis = panel[panel$his<(-0.38146),]
+reg_melh = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = panellohis)
+summary(reg_melh)
+confint(reg_melh,method="Wald")
+
+panelhihis = panel[panel$his>(-0.38146),]
+reg_mehh = lmer(ca~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1|time) ,
+                data = panelhihis)
+summary(reg_mehh)
+confint(reg_mehh,method="Wald")
+
 
