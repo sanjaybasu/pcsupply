@@ -241,7 +241,7 @@ setwd("~/Data/ahrf")
 
 
 load("~/Data/ahrf/ahrf_county")
-load("~/Data/ahrf/transtot")
+load("~/Data/ahrf/trans_counties")
 load("~/Data/ahrf/chrd")
 load("~/Data/ahrf/ctyurb")
 

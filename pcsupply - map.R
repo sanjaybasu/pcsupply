@@ -1,3 +1,6 @@
+
+# Organize into panel data  ---------------------------------------
+
 rm(list=ls())
 library(tidyverse)
 setwd("~/Data/ahrf")
@@ -8,23 +11,23 @@ load("~/Data/ahrf/life_expect_counties")
 load("~/Data/ahrf/chrd")
 load("~/Data/ahrf/ctyurb")
 
-# install.packages("mapproj")
-# install.packages("ggmap")
-# install.packages("DeducerSpatial")
-
-
+# County-level non-federal [non-military] MD providers = total general practice (GP and fam med) + general internal medicine ---------------------------------------
+# Other providers [DO, NP] available only from 2010
 
 ahrf_county %>% 
   select(county = F04437, 
          fips = F00002, 
          gim_2005 = `F11209-05`, #    Gnrl Int Med, PC, Office Based 
          tgp_2005 = `F08860-05`, #    MD's, Tot Gen Pract, PC,Off Bsd 
+         ped_2005 = `F11706-05`, #    Peds, Tot PC, Off Bsd
          pop_2005 = `F11984-05`, 
          gim_2010 = `F11209-10`,
          tgp_2010 = `F08860-10`,
+         ped_2010 = `F11706-10`,
          pop_2010 = `F04530-10`, 
          gim_2015 = `F11209-15`,
          tgp_2015 = `F08860-15`,
+         ped_2015 = `F11706-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
          inc_2005 = `F13226-05`, #   Median Household Income             , See https://www.bea.gov/newsreleases/regional/lapi/lapi_newsrelease.htm
@@ -70,9 +73,9 @@ ahrf_county %>%
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005))/pop_2005*10000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010))/pop_2010*10000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015))/pop_2015*10000,
+         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*10000,  # PC providers per 10k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*10000,
+         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*10000,
          inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
          inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
@@ -182,6 +185,7 @@ counties_data <- left_join(counties_data,chrd, by=c("fips"="fips"))
 counties_data
 
 
+
 require(maps)
 require(ggmap)
 map("county")
@@ -233,16 +237,16 @@ legend("bottomright", leg.txt, horiz = F, fill = colors, title = c(expression(pa
 
 
 
-#### FIGURES 2-3, APP FIGS 1-2 -----
+#### FIGURES -----
 
 
-# FIG 2
+# APP FIG 1
 library(metafor) 
 par(font=1)
-forest(c(-0.2343, -0.657, -0.458, -0.592, -0.545,  -0.4140, -0.548, -0.3702),
-       ci.lb=c(-2.3, -4.9, -4.3, -4.0, -4.6, -3.0, -4.4, -4.0),
-       ci.ub=c(1.8, 3.2, 3.1, 2.1, 3.1, 1.8, 2.7, 2.6),
-       xlim=c(-10,8),
+forest(c(-0.2628, -0.697, -0.498, -0.629, -0.578,  -0.4700, -0.584, -0.4194),
+       ci.lb=c(-2.629598, -5.092626, -4.684263, -4.358027, -4.786918, -3.217592, -4.575187, -3.974316),
+       ci.ub=c(2.048900, 3.433928, 3.169193, 2.336349, 3.388390, 2.179708, 2.860016, 2.521582),
+       xlim=c(-10,14),
        ylim=c(-1,17),
        rows=c(9,8,6,5,3,2,0,-1),
        slab=c(" Metro"," Non-metro/rural"," Low poverty"," High poverty"," Low Black %"," High Black %"," Low Hispanic %"," High Hispanic %"),
@@ -252,41 +256,44 @@ par(font=2)
 text(-10,c(10,7,4,1),pos=4,c("Urban/rural","Poverty","Black race","Hispanic ethnicity"))
 
 
-# FIG 3
-par(font=1)
-forest(c(-1.0/2.8, -1.6/11.9,-5.6/2.8,-11.7/11.9, 0.5/2.8,-5.1/11.9, -1.0/2.8,-12.3/11.9, -1.5/2.8,-4.2/11.9),
-       ci.lb=c((-1.0-1.96*1.4)/2.8, (-1.6-1.96*1.0)/11.9,(-5.6-1.96*2.7)/2.8,(-11.7-1.96*5.1)/11.9, (0.5-1.96*0.6)/2.8,(-5.1-1.96*3.6)/11.9, (-1.0-1.96*0.9)/2.8,(-12.3-1.96*2.9)/11.9, (-1.5-1.96*0.7)/2.8,(-4.2-1.96*2.9)/11.9),
-       ci.ub=c((-1.0+1.96*1.4)/2.8, (-1.6+1.96*1.0)/11.9,(-5.6+1.96*2.7)/2.8,(-11.7+1.96*5.1)/11.9, (0.5+1.96*0.6)/2.8,(-5.1+1.96*3.6)/11.9, (-1.0+1.96*0.9)/2.8,(-12.3+1.96*2.9)/11.9, (-1.5+1.96*0.7)/2.8,(-4.2+1.96*2.9)/11.9),
-       xlim=c(-8,5),
-       ylim=c(-1,20),
-       rows=c(12,11,9,8,6,5,3,2,0,-1),
-       slab=c(" Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"),
-       xlab=c(expression(paste(plain(Delta),"Mortality per million"))),
-       refline='NA')
-par(font=2)
-text(-8,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
-
-
-# APP FIG 1
-par(font=1)
-forest(c(-0.3/2.8, -1.1/11.9,-4.3/2.8,-7/11.9, 0.5/2.8,-2.4/11.9, -0.6/2.8,-8.9/11.9, -1.1/2.8,-3/11.9),
-       ci.lb=c((-.3-1.96*.8)/2.8, (-1.1-1.96*.5)/11.9,(-4.3-1.96*1.6)/2.8,(-7-1.96*3.5)/11.9, (0.5-1.96*.4)/2.8,(-2.4-1.96*1.7)/11.9, (-.6-1.96*.5)/2.8,(-8.9-1.96*1.5)/11.9, (-1.1-1.96*.3)/2.8,(-3-1.96*1.5)/11.9),
-       ci.ub=c((-.3+1.96*.8)/2.8, (-1.1+1.96*.5)/11.9,(-4.3+1.96*1.6)/2.8,(-7+1.96*3.5)/11.9, (0.5+1.96*.4)/2.8,(-2.4+1.96*1.7)/11.9, (-.6+1.96*.5)/2.8,(-8.9+1.96*1.5)/11.9, (-1.1+1.96*.3)/2.8,(-3+1.96*1.5)/11.9),
-       xlim=c(-8,5),
-       ylim=c(-1,20),
-       rows=c(12,11,9,8,6,5,3,2,0,-1),
-       slab=c(" Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"),
-       xlab=c(expression(paste(plain(Delta),"Mortality per million"))),
-       refline='NA')
-par(font=2)
-text(-8,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
-
 
 # APP FIG 2
+library(metafor) 
 par(font=1)
-forest(c(-1.3/2.8, -2.3/11.9,-2.3/2.8,-9.2/11.9, 0.3/2.8, -5.4/11.9, 0.08/2.8,-8/11.9, 0.3/2.8,3.7/11.9),
-       ci.lb=c((-1.3-1.96*2.1)/2.8, (-2.3-1.96*1.2)/11.9,(-2.3-1.96*3.4)/2.8,(-9.2-1.96*10)/11.9,(0.3+1.96*.7)/11.9, (-5.4-1.96*3.9)/2.8,(0.08-1.96*1)/2.8, (-8-1.96*3.1)/11.9, (.3-1.96*.7)/2.8,(3.7-1.96*2.7)/11.9),
-       ci.ub=c((-1.3+1.96*2.1)/2.8, (-2.3+1.96*1.2)/11.9,(-2.3+1.96*3.4)/2.8,(-9.2+1.96*10)/11.9,(0.3+1.96*.7)/11.9, (-5.4+1.96*3.9)/2.8,(0.08+1.96*1)/2.8, (-8+1.96*3.1)/11.9, (.3+1.96*.7)/2.8,(3.7+1.96*2.7)/11.9),
+forest(c(0.9126, -0.012, 0.546, -0.064, 0.226, 0.5306, 0.327, 0.2443),
+       ci.lb=c(-2.812889, -4.540311, -3.974788, -4.012842, -4.276700, -3.573294, -4.268103, -3.340282),
+       ci.ub=c(9.129309, 4.070574, 6.149926, 4.473024, 5.007611, 7.657232, 5.669563, 5.463903),
+       xlim=c(-10,14),
+       ylim=c(-1,17),
+       rows=c(9,8,6,5,3,2,0,-1),
+       slab=c(" Metro"," Non-metro/rural"," Low poverty"," High poverty"," Low Black %"," High Black %"," Low Hispanic %"," High Hispanic %"),
+       xlab=c(expression(paste(plain(Delta),"MDs/10,000 pop"))),
+       refline='NA')
+par(font=2)
+text(-10,c(10,7,4,1),pos=4,c("Urban/rural","Poverty","Black race","Hispanic ethnicity"))
+
+
+
+# FIG 2
+par(font=1)
+forest(c(-12.4/3.2, -19.0/11.2,-18.8/3.2,-43/11.2, -0.7/3.2,-3.8/11.2, -4.8/3.2,-13.2/11.2, -0.3/3.2,0.3/11.2),
+       ci.lb=c(-16.3/3.2, -24.5/11.2, -25.6/3.2, -54.1/11.2, -2.0/3.2, -6.2/11.2, -6.2/3.2, -16.6/11.2, -0.4/3.2, 0.2/11.2),
+       ci.ub=c(-8.5/3.2, -13.6/11.2, -12.1/3.2, -31.9/11.2, 0.6/3.2, -1.4/11.2, -3.3/3.2, -9.8/11.2, -0.2/3.2, 0.4/11.2),
+       xlim=c(-12,5),
+       ylim=c(-1,20),
+       rows=c(12,11,9,8,6,5,3,2,0,-1),
+       slab=c(" Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"),
+       xlab=c(expression(paste(plain(Delta),"Mortality per million"))),
+       refline='NA')
+par(font=2)
+text(-12,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
+
+
+# APP FIG 4
+par(font=1)
+forest(c(-3.0/3.2, -20.1/11.2,1.5/3.2,-47.8/11.2, 0.1/3.2,-4.1/11.2, -0.9/3.2,-14.5/11.2, -0.1/3.2,0.4/11.2),
+       ci.lb=c(-5/3.2, -25.7/11.2, -3.3/3.2, -59.5/11.2, -0.8/3.2, -6.5/11.2, -2.1/3.2, -18/11.2, -.2/3.2, .3/11.2),
+       ci.ub=c(-1.1/3.2, -14.6/11.2, 6.3/3.2, -36.2/11.2, 1/3.2, -1.7/11.2, 0.4/3.2, -10.9/11.2, -.01/3.2, .5/11.2),
        xlim=c(-8,5),
        ylim=c(-1,20),
        rows=c(12,11,9,8,6,5,3,2,0,-1),
@@ -295,19 +302,3 @@ forest(c(-1.3/2.8, -2.3/11.9,-2.3/2.8,-9.2/11.9, 0.3/2.8, -5.4/11.9, 0.08/2.8,-8
        refline='NA')
 par(font=2)
 text(-8,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
