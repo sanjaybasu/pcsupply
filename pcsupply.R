@@ -69,18 +69,7 @@ read_fwf(file = raw_src,
                                        end = ahrf_county_layout$col_end,
                                        col_names = ahrf_county_layout$field)) -> ahrf_county
 ahrf_county
-
-# Add variable labels -----------------------------------------------------
-
-ahrf_county_layout %>%
-  select(field, var_label) %>%
-  deframe() %>%
-  as.list() -> var_label(ahrf_county)
-var_label(ahrf_county)
-
-# Save AHRF  ----------------------------------------------------------------
-
-save(ahrf_county,file="ahrf_county")
+ 
 
 # Delete raw data as it’s too large ---------------------------------------
 
@@ -310,15 +299,15 @@ ahrf_county %>%
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         fp_2005 = as.integer(tgp_2005)/pop_2005*10000,
-         fp_2010 = as.integer(tgp_2010)/pop_2005*10000,
-         fp_2015 = as.integer(tgp_2015)/pop_2005*10000,
-         gim_2005 = as.integer(gim_2005)/pop_2005*10000,
-         gim_2010 = as.integer(gim_2010)/pop_2005*10000,
-         gim_2015 = as.integer(gim_2015)/pop_2005*10000,
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*10000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*10000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*10000,
+         fp_2005 = as.integer(tgp_2005)/pop_2005*100000,
+         fp_2010 = as.integer(tgp_2010)/pop_2005*100000,
+         fp_2015 = as.integer(tgp_2015)/pop_2005*100000,
+         gim_2005 = as.integer(gim_2005)/pop_2005*100000,
+         gim_2010 = as.integer(gim_2010)/pop_2005*100000,
+         gim_2015 = as.integer(gim_2015)/pop_2005*100000,
+         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*100000,  # PC providers per 10k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*100000,
+         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*100000,
          inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
          inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
@@ -349,12 +338,12 @@ ahrf_county %>%
          pov_2005 = as.integer(pov_2005)/10,
          pov_2010 = as.integer(pov_2010)/10,
          pov_2015 = as.integer(pov_2015)/10,
-         spec_2005 = ((as.integer(spec_2005))/pop_2005*10000)-pc_2005,
-         spec_2010 = ((as.integer(spec_2010))/pop_2010*10000)-pc_2010,
-         spec_2015 = ((as.integer(spec_2015))/pop_2015*10000)-pc_2015,
-         hobed_2005 = as.integer(hobed_2005)/pop_2005*10000,
-         hobed_2010 = as.integer(hobed_2010)/pop_2010*10000,
-         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*10000,
+         spec_2005 = ((as.integer(spec_2005))/pop_2005*100000)-pc_2005,
+         spec_2010 = ((as.integer(spec_2010))/pop_2010*100000)-pc_2010,
+         spec_2015 = ((as.integer(spec_2015))/pop_2015*100000)-pc_2015,
+         hobed_2005 = as.integer(hobed_2005)/pop_2005*100000,
+         hobed_2010 = as.integer(hobed_2010)/pop_2010*100000,
+         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*100000,
          unins_2005 = (as.integer(unins_2010)-(as.integer(unins_2015)-as.integer(unins_2010)))/10,
          unins_2010 = as.integer(unins_2010)/10,
          unins_2015 = as.integer(unins_2015)/10,
@@ -449,21 +438,47 @@ plot(panel$pc,panel$le)
 plot(log(panel$pc),(panel$le), xlab = "Log (# of primary care physicians/10k pop)", ylab = "Age-adjusted life expectancy at birth (years)")
 
 
+save(panel,file="pcpanel")
+save(paneldata,file="pcpaneldata")
+
+
 
 
 # descriptive stats ----
-summary(panel$pc[panel$time==2005])
-quantile(panel$pc[panel$time==2005],c(.025,.975),na.rm=T)
-summary(panel$pc[panel$time==2010])
-quantile(panel$pc[panel$time==2010],c(.025,.975),na.rm=T)
-summary(panel$pc[panel$time==2015])
-quantile(panel$pc[panel$time==2015],c(.025,.975),na.rm=T)
+rm(list=ls())
+library(tidyverse)
+library(tableone)
+setwd("~/Data/ahrf")
+load("~/Data/ahrf/pcpanel")
+load("~/Data/ahrf/pcpaneldata")
+
+panel$tot = panel$pc + panel$spec
+panel05 = panel[,2:28]
+panel05 = panel05[panel05$time==2005,]
+panel15 = panel[,2:28]
+panel15 = panel15[panel15$time==2015,]
+paneldiff = panel15-panel05
+tableone05 = matrix(0,nrow=27,ncol=3)
+tableone15 = matrix(0,nrow=27,ncol=3)
+tableoned = matrix(0,nrow=27,ncol=3)
+
+for (i in 1:27){
+  tableone05[i,1:3] = c(mean(na.omit(panel05[,i])),quantile(panel05[,i],na.rm=T,c(.025,.975))[1],quantile(panel05[,i],na.rm=T,c(.025,.975))[2])
+  tableone15[i,1:3] = c(mean(na.omit(panel15[,i])),quantile(panel15[,i],na.rm=T,c(.025,.975))[1],quantile(panel15[,i],na.rm=T,c(.025,.975))[2])
+  tableoned[i,1:3] = c(mean(na.omit(paneldiff[,i])),quantile(paneldiff[,i],na.rm=T,c(.025,.975))[1],quantile(paneldiff[,i],na.rm=T,c(.025,.975))[2])
+}
+colnames(panel05)
+tableone05
+tableone15
+tableoned
+
 
 panel$rural = panel$urb>=5
 table(panel$rural[panel$time==2005])/length(panel$time==2005)
 table(panel$rural[panel$time==2015])/length(panel$time==2015)
-
 panel$ruralchange = panel$rural[panel$time==2015]-panel$rural[panel$time==2005]
+summary(panel$ruralchange)
+quantile(panel$ruralchange,c(.025,.975),na.rm=T)
 
 pc_gainloss = (panel$pc[panel$time==2015]-panel$pc[panel$time==2005])
 summary(pc_gainloss)
@@ -508,47 +523,79 @@ quantile(spec_gainloss[panel$his<8],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$his>=8],c(.025,.975),na.rm=T)
 
 
-library(tableone)
-CreateTableOne(data=paneldata[,2:76])
-
-panel05 = panel[,2:26]
-panel05 = panel05[panel05$time==2005,]
-panel15 = panel[,2:26]
-panel15 = panel15[panel15$time==2015,]
-paneldiff = panel15-panel05
-CreateTableOne(data=paneldiff)
-
-
-
-
-
 # center and scale ----
 library(plm)
 library(stargazer)
 
-panel$fp = c(scale(panel$fp))
-panel$gim = c(scale(panel$gim))
-panel$pc = c(scale(panel$pc))
-panel$ed = c(scale(panel$ed))
-panel$medct = c(scale(panel$medct))
-panel$eld = c(scale(panel$eld))
-panel$fem = c(scale(panel$fem))
-panel$blk = c(scale(panel$blk))
-panel$his = c(scale(panel$his))
-panel$unemp = c(scale(panel$unemp))
-panel$poll = c(scale(panel$poll))
-panel$pov = c(scale(panel$pov))
-panel$hobed = c(scale(panel$hobed))
-panel$unins = c(scale(panel$unins))
-panel$mcare = c(scale(panel$mcare))
-panel$obese = c(scale(panel$obese))
-panel$tob = c(scale(panel$tob))
-panel$spec = c(scale(panel$spec))
-panel$inc = c(scale(panel$inc/1000))
+zpanel = panel
+zpanel$fp = log(zpanel$fp+1)
+zpanel$gim = log(zpanel$gim+1)
+zpanel$pc = log(zpanel$pc+1)
+zpanel$inc = log(zpanel$inc)
+zpanel$ed = log(zpanel$ed+1)
+zpanel$medct = log(zpanel$medct)
+zpanel$eld = log(zpanel$eld)
+zpanel$fem = log(zpanel$fem)
+zpanel$blk = log(zpanel$blk+1)
+zpanel$his = log(zpanel$his+1)
+zpanel$unemp = log(zpanel$unemp)
+zpanel$poll = log(zpanel$poll+1)
+zpanel$pov = log(zpanel$pov)
+zpanel$spec = log(zpanel$spec+1)
+zpanel$hobed = log(zpanel$hobed+1)
+zpanel$unins = log(zpanel$unins)
+zpanel$mcare = log(zpanel$mcare+1)
+zpanel$obese = log(zpanel$obese)
+zpanel$tot = log(zpanel$tot+1)
+zpanel$tob = log(zpanel$tob)
+
+exp(mean(na.omit(log(panel$pov))))-exp(sd(na.omit(log(panel$pov))))
+exp(mean(na.omit(log(panel$pov))))+exp(sd(na.omit(log(panel$pov))))
+exp(mean(na.omit(log(panel$ed+1))))-exp(sd(na.omit(log(panel$ed+1))))
+exp(mean(na.omit(log(panel$ed+1))))+exp(sd(na.omit(log(panel$ed+1))))
+exp(mean(na.omit(log(panel$blk+1))))-exp(sd(na.omit(log(panel$blk+1))))
+exp(mean(na.omit(log(panel$blk+1))))+exp(sd(na.omit(log(panel$blk+1))))
+exp(mean(na.omit(log(panel$his+1))))-exp(sd(na.omit(log(panel$his+1))))
+exp(mean(na.omit(log(panel$his+1))))+exp(sd(na.omit(log(panel$his+1))))
+exp(mean(na.omit(log(panel$unemp))))-exp(sd(na.omit(log(panel$unemp))))
+exp(mean(na.omit(log(panel$unemp))))+exp(sd(na.omit(log(panel$unemp))))
+exp(mean(na.omit(log(panel$hobed+1))))-exp(sd(na.omit(log(panel$hobed+1))))
+exp(mean(na.omit(log(panel$hobed+1))))+exp(sd(na.omit(log(panel$hobed+1))))
+exp(mean(na.omit(log(panel$mcare+1))))-exp(sd(na.omit(log(panel$mcare+1))))
+exp(mean(na.omit(log(panel$mcare+1))))+exp(sd(na.omit(log(panel$mcare+1))))
+exp(mean(na.omit(log(panel$medct))))-exp(sd(na.omit(log(panel$medct))))
+exp(mean(na.omit(log(panel$medct))))+exp(sd(na.omit(log(panel$medct))))
+exp(mean(na.omit(log(panel$tob))))-exp(sd(na.omit(log(panel$tob))))
+exp(mean(na.omit(log(panel$tob))))+exp(sd(na.omit(log(panel$tob))))
+exp(mean(na.omit(log(panel$obese))))-exp(sd(na.omit(log(panel$obese))))
+exp(mean(na.omit(log(panel$obese))))+exp(sd(na.omit(log(panel$obese))))
+exp(mean(na.omit(log(panel$poll+1))))-exp(sd(na.omit(log(panel$poll+1))))
+exp(mean(na.omit(log(panel$poll+1))))+exp(sd(na.omit(log(panel$poll+1))))
 
 
-panel$urb = panel$urb>=5
-panel$le = panel$le*365.25
+zpanel$fp = (zpanel$fp-mean(na.omit(zpanel$fp)))/(2*sd(na.omit(zpanel$fp)))
+zpanel$gim = (zpanel$gim-mean(na.omit(zpanel$gim)))/(2*sd(na.omit(zpanel$gim)))
+zpanel$pc = (zpanel$pc-mean(na.omit(zpanel$pc)))/(2*sd(na.omit(zpanel$pc)))
+zpanel$spec = (zpanel$spec-mean(na.omit(zpanel$spec)))/(2*sd(na.omit(zpanel$spec)))
+zpanel$tot = (zpanel$tot-mean(na.omit(zpanel$tot)))/(2*sd(na.omit(zpanel$tot)))
+zpanel$ed = (zpanel$ed-mean(na.omit(zpanel$ed)))/(2*sd(na.omit(zpanel$ed)))
+zpanel$medct = (zpanel$medct-mean(na.omit(zpanel$medct)))/(2*sd(na.omit(zpanel$medct)))
+zpanel$eld = (zpanel$eld-mean(na.omit(zpanel$eld)))/(2*sd(na.omit(zpanel$eld)))
+zpanel$fem = (zpanel$fem-mean(na.omit(zpanel$fem)))/(2*sd(na.omit(zpanel$fem)))
+zpanel$blk = (zpanel$blk-mean(na.omit(zpanel$blk)))/(2*sd(na.omit(zpanel$blk)))
+zpanel$his = (zpanel$his-mean(na.omit(zpanel$his)))/(2*sd(na.omit(zpanel$his)))
+zpanel$unemp = (zpanel$unemp-mean(na.omit(zpanel$unemp)))/(2*sd(na.omit(zpanel$unemp)))
+zpanel$poll = (zpanel$poll-mean(na.omit(zpanel$poll)))/(2*sd(na.omit(zpanel$poll)))
+zpanel$pov = (zpanel$pov-mean(na.omit(zpanel$pov)))/(2*sd(na.omit(zpanel$pov)))
+zpanel$hobed = (zpanel$hobed-mean(na.omit(zpanel$hobed)))/(2*sd(na.omit(zpanel$hobed)))
+zpanel$unins = (zpanel$unins-mean(na.omit(zpanel$unins)))/(2*sd(na.omit(zpanel$unins)))
+zpanel$mcare = (zpanel$mcare-mean(na.omit(zpanel$mcare)))/(2*sd(na.omit(zpanel$mcare)))
+zpanel$obese = (zpanel$obese-mean(na.omit(zpanel$obese)))/(2*sd(na.omit(zpanel$obese)))
+zpanel$tob = (zpanel$tob-mean(na.omit(zpanel$tob)))/(2*sd(na.omit(zpanel$tob)))
+zpanel$inc = (zpanel$inc-mean(na.omit(zpanel$inc)))/(2*sd(na.omit(zpanel$inc)))
+ 
+zpanel$urb = zpanel$urb>=5
+zpanel$le = zpanel$le*365.25
 
 
 # address collinearity with VIFs----
@@ -573,97 +620,82 @@ panel$le = panel$le*365.25
 # Regressions  ----
 
 library(lme4)
-reg_meu = lmer(le~pc+ (1+pc| county)+ (1|time) ,
-               data = panel)
-summary(reg_meu)
-confint(reg_meu,method="Wald")
 
-reg_mes = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panel)
-summary(reg_mes)
-confint(reg_mes,method="Wald")
+reg_min = (lmer(le~pc+ (1+pc| county)+ (1|time) ,
+               data = zpanel))
+summary(reg_min)
+confint(reg_min,method="Wald")
 
 
-paneltest = pdata.frame(panel,index = c("county","time"))
+
+reg_tot = (lmer(le~tot+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob + (1+tot| county)+ (1|time) ,
+                data = zpanel))
+summary(reg_tot)
+confint(reg_tot,method="Wald")
+exp(mean(na.omit(log(panel$tot+1))))-exp(sd(na.omit(log(panel$tot+1))))
+exp(mean(na.omit(log(panel$tot+1))))+exp(sd(na.omit(log(panel$tot+1))))
+
+
+
+reg_pc = (lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob + (1+pc| county)+ (1|time) ,
+                data = zpanel))
+summary(reg_pc)
+confint(reg_pc,method="Wald")
+exp(mean(na.omit(log(panel$pc+1))))-exp(sd(na.omit(log(panel$pc+1))))
+exp(mean(na.omit(log(panel$pc+1))))+exp(sd(na.omit(log(panel$pc+1))))
+
+
+reg_spec = (lmer(le~spec+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob + (1+spec| county)+ (1|time) ,
+                data = zpanel))
+summary(reg_spec)
+confint(reg_spec,method="Wald")
+exp(mean(na.omit(log(panel$spec+1))))-exp(sd(na.omit(log(panel$spec+1))))
+exp(mean(na.omit(log(panel$spec+1))))+exp(sd(na.omit(log(panel$spec+1))))
+
+
+reg_base = (lmer(le~pc+spec+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob + (1+pc| county)+ (1|time) ,
+               data = zpanel))
+summary(reg_base)
+confint(reg_base,method="Wald")
+
+
+
+
+# Sensitivity analyses ----------
+
+paneltest = pdata.frame(zpanel,index = c("county","time"))
 mylag <- function(x,lag) {
   c(rep(NA,lag),head(x,-lag))
 }
 dd=transform(paneltest,lagpc1=mylag(pc,1))
 dd$pc[dd$time==2005]='NA'
 
-reg_mel = lmer(le~lagpc1+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+lagpc1| county)+ (1|time) ,
-               data = dd)
+reg_mel = (lmer(le~lagpc1+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+lagpc1| county)+ (1|time) ,
+               data = dd))
 summary(reg_mel)
 confint(reg_mel,method="Wald") 
 
 
-
-
-reg_mef = lmer(le~fp+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panel)
-summary(reg_mef)
-confint(reg_mef,method="Wald")
-
-
-
-reg_meg = lmer(le~gim+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panel)
-summary(reg_meg)
-confint(reg_meg,method="Wald")
-
-
-
-
-panelurb = panel[panel$urb==1,]
-reg_meu = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panelurb)
+reg_meu = lmer(le~pc+urb+pc*urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = zpanel)
 summary(reg_meu)
 confint(reg_meu,method="Wald")
 
-panelrur = panel[panel$urb==0,]
-reg_mer = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panelrur)
-summary(reg_mer)
-confint(reg_mer,method="Wald")
 
 
-
-panellopov = panel[panel$pov<(-0.1584),]
-reg_melp = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panellopov)
+reg_melp = lmer(le~pc+pc*pov+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+               data = zpanel)
 summary(reg_melp)
 confint(reg_melp,method="Wald")
 
-panelhipov = panel[panel$pov>(-0.1584),]
-reg_mehp = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = panelhipov)
-summary(reg_mehp)
-confint(reg_mehp,method="Wald")
 
-
-
-panelloblk = panel[panel$blk<(-0.47508),]
-reg_melb = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-                data = panelloblk)
+reg_melb = lmer(le~pc+pc*blk+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = zpanel)
 summary(reg_melb)
 confint(reg_melb,method="Wald")
 
-panelhiblk = panel[panel$blk>(-0.47508),]
-reg_mehb = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-                data = panelhiblk)
-summary(reg_mehb)
-confint(reg_mehb,method="Wald")
 
-
-
-panellohis = panel[panel$his<(-0.38146),]
-reg_melh = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-                data = panellohis)
+reg_melh = lmer(le~pc+pc*his+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+                data = zpanel)
 summary(reg_melh)
 confint(reg_melh,method="Wald")
-
-panelhihis = panel[panel$his>(-0.38146),]
-reg_mehh = lmer(le~pc+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-                data = panelhihis)
-summary(reg_mehh)
-confint(reg_mehh,method="Wald")

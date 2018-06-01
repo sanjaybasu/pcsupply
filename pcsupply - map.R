@@ -1,6 +1,3 @@
-
-# Organize into panel data  ---------------------------------------
-
 rm(list=ls())
 library(tidyverse)
 setwd("~/Data/ahrf")
@@ -73,9 +70,15 @@ ahrf_county %>%
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*10000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*10000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*10000,
+         fp_2005 = as.integer(tgp_2005)/pop_2005*100000,
+         fp_2010 = as.integer(tgp_2010)/pop_2005*100000,
+         fp_2015 = as.integer(tgp_2015)/pop_2005*100000,
+         gim_2005 = as.integer(gim_2005)/pop_2005*100000,
+         gim_2010 = as.integer(gim_2010)/pop_2005*100000,
+         gim_2015 = as.integer(gim_2015)/pop_2005*100000,
+         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*100000,  # PC providers per 10k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*100000,
+         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*100000,
          inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
          inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
@@ -106,12 +109,12 @@ ahrf_county %>%
          pov_2005 = as.integer(pov_2005)/10,
          pov_2010 = as.integer(pov_2010)/10,
          pov_2015 = as.integer(pov_2015)/10,
-         spec_2005 = ((as.integer(spec_2005))/pop_2005*10000)-pc_2005,
-         spec_2010 = ((as.integer(spec_2010))/pop_2010*10000)-pc_2010,
-         spec_2015 = ((as.integer(spec_2015))/pop_2015*10000)-pc_2015,
-         hobed_2005 = as.integer(hobed_2005)/pop_2005*10000,
-         hobed_2010 = as.integer(hobed_2010)/pop_2010*10000,
-         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*10000,
+         spec_2005 = ((as.integer(spec_2005))/pop_2005*100000)-pc_2005,
+         spec_2010 = ((as.integer(spec_2010))/pop_2010*100000)-pc_2010,
+         spec_2015 = ((as.integer(spec_2015))/pop_2015*100000)-pc_2015,
+         hobed_2005 = as.integer(hobed_2005)/pop_2005*100000,
+         hobed_2010 = as.integer(hobed_2010)/pop_2010*100000,
+         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*100000,
          unins_2005 = (as.integer(unins_2010)-(as.integer(unins_2015)-as.integer(unins_2010)))/10,
          unins_2010 = as.integer(unins_2010)/10,
          unins_2015 = as.integer(unins_2015)/10,
@@ -125,6 +128,12 @@ ahrf_county[ahrf_county<0]=0
 ahrf_county <- ahrf_county %>%
   select(county,
          fips,
+         fp_2005,
+         fp_2010,
+         fp_2015,
+         gim_2005,
+         gim_2010,
+         gim_2015,
          pc_2005,
          pc_2010,
          pc_2015,
@@ -184,8 +193,6 @@ counties_data
 counties_data <- left_join(counties_data,chrd, by=c("fips"="fips"))
 counties_data
 
-
-
 require(maps)
 require(ggmap)
 map("county")
@@ -210,7 +217,7 @@ colors = c("#d73027", "#fc8d59", "#fee090", "#e0f3f8", "#91bfdb",
 
 counties_data$pcchange = counties_data$pc_2015-counties_data$pc_2005
 
-counties_data$colorBuckets <- as.numeric(cut(counties_data$pcchange, c(-100,-1,-.5,0,.5,1,100)))
+counties_data$colorBuckets <- as.numeric(cut(counties_data$pcchange, c(-10000,-10,-5,0,5,10,10000)))
 
 colorsmatched <- counties_data$colorBuckets[match(county.fips$fips, counties_data$fipscode)]
 
@@ -227,8 +234,8 @@ map("state", col = "white", fill = FALSE, add = TRUE, lty = 1, lwd = 0.2,
     projection = "polyconic")
 title("Change in primary care physician density, 2005-2015")
 
-leg.txt <- c("<-1", "-1 to <-0.5", "-0.5 to <0", "0 to <+0.5", "+0.5-<+1", ">+1")
-legend("bottomright", leg.txt, horiz = F, fill = colors, title = c(expression(paste(plain(Delta),"MDs/10,000 pop"))))
+leg.txt <- c("<-10", "-10 to <-5", "-5 to <0", "0 to <+5", "+5 to >+10", ">+10")
+legend("bottomright", leg.txt, horiz = F, pch="", cex=0.85, fill = colors, title = c(expression(paste(plain(Delta),"MDs/100k pop"))))
 
 
 
@@ -242,63 +249,76 @@ legend("bottomright", leg.txt, horiz = F, fill = colors, title = c(expression(pa
 
 # APP FIG 1
 library(metafor) 
-par(font=1)
-forest(c(-0.2628, -0.697, -0.498, -0.629, -0.578,  -0.4700, -0.584, -0.4194),
-       ci.lb=c(-2.629598, -5.092626, -4.684263, -4.358027, -4.786918, -3.217592, -4.575187, -3.974316),
-       ci.ub=c(2.048900, 3.433928, 3.169193, 2.336349, 3.388390, 2.179708, 2.860016, 2.521582),
-       xlim=c(-10,14),
-       ylim=c(-1,17),
-       rows=c(9,8,6,5,3,2,0,-1),
-       slab=c(" Metro"," Non-metro/rural"," Low poverty"," High poverty"," Low Black %"," High Black %"," Low Hispanic %"," High Hispanic %"),
-       xlab=c(expression(paste(plain(Delta),"MDs/10,000 pop"))),
-       refline='NA')
-par(font=2)
-text(-10,c(10,7,4,1),pos=4,c("Urban/rural","Poverty","Black race","Hispanic ethnicity"))
-
 
 
 # APP FIG 2
-library(metafor) 
+counties_data$specchange = counties_data$spec_2015-counties_data$spec_2005
+
 par(font=1)
-forest(c(0.9126, -0.012, 0.546, -0.064, 0.226, 0.5306, 0.327, 0.2443),
-       ci.lb=c(-2.812889, -4.540311, -3.974788, -4.012842, -4.276700, -3.573294, -4.268103, -3.340282),
-       ci.ub=c(9.129309, 4.070574, 6.149926, 4.473024, 5.007611, 7.657232, 5.669563, 5.463903),
-       xlim=c(-10,14),
+forest(c(mean(counties_data$specchange[counties_data$urb_2005<5],na.rm=T), 
+         mean(counties_data$specchange[counties_data$urb_2005>=5],na.rm=T), 
+         mean(counties_data$specchange[counties_data$pov_2005<16],na.rm=T),
+         mean(counties_data$specchange[counties_data$pov_2005>=16],na.rm=T), 
+         mean(counties_data$specchange[counties_data$blk_2005<9],na.rm=T),  
+         mean(counties_data$specchange[counties_data$blk_2005>=9],na.rm=T), 
+         mean(counties_data$specchange[counties_data$his_2005<8],na.rm=T), 
+         mean(counties_data$specchange[counties_data$urb_2005>=8],na.rm=T)),
+       ci.lb=c(quantile(counties_data$specchange[counties_data$urb_2005<5],c(.025),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$urb_2005>=5],c(.025),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$pov_2005<16],c(.025),na.rm=T),
+               quantile(counties_data$specchange[counties_data$pov_2005>=16],c(.025),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$blk_2005<9],c(.025),na.rm=T),  
+               quantile(counties_data$specchange[counties_data$blk_2005>=9],c(.025),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$his_2005<8],c(.025),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$urb_2005>=8],c(.025),na.rm=T)),
+       ci.ub=c(quantile(counties_data$specchange[counties_data$urb_2005<5],c(.975),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$urb_2005>=5],c(.975),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$pov_2005<16],c(.975),na.rm=T),
+               quantile(counties_data$specchange[counties_data$pov_2005>=16],c(.975),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$blk_2005<9],c(.975),na.rm=T),  
+               quantile(counties_data$specchange[counties_data$blk_2005>=9],c(.975),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$his_2005<8],c(.975),na.rm=T), 
+               quantile(counties_data$specchange[counties_data$urb_2005>=8],c(.975),na.rm=T)),
+       xlim=c(-100,150),
        ylim=c(-1,17),
        rows=c(9,8,6,5,3,2,0,-1),
        slab=c(" Metro"," Non-metro/rural"," Low poverty"," High poverty"," Low Black %"," High Black %"," Low Hispanic %"," High Hispanic %"),
-       xlab=c(expression(paste(plain(Delta),"MDs/10,000 pop"))),
+       xlab=c(expression(paste(plain(Delta),"MDs/100,000 pop"))),
        refline='NA')
 par(font=2)
-text(-10,c(10,7,4,1),pos=4,c("Urban/rural","Poverty","Black race","Hispanic ethnicity"))
+text(-100,c(10,7,4,1),pos=4,c("Urban/rural","Poverty","Black race","Hispanic ethnicity"))
+
 
 
 
 # FIG 2
 par(font=1)
-forest(c(-12.4/3.2, -19.0/11.2,-18.8/3.2,-43/11.2, -0.7/3.2,-3.8/11.2, -4.8/3.2,-13.2/11.2, -0.3/3.2,0.3/11.2),
-       ci.lb=c(-16.3/3.2, -24.5/11.2, -25.6/3.2, -54.1/11.2, -2.0/3.2, -6.2/11.2, -6.2/3.2, -16.6/11.2, -0.4/3.2, 0.2/11.2),
-       ci.ub=c(-8.5/3.2, -13.6/11.2, -12.1/3.2, -31.9/11.2, 0.6/3.2, -1.4/11.2, -3.3/3.2, -9.8/11.2, -0.2/3.2, 0.4/11.2),
-       xlim=c(-12,5),
+forest(c(-7.9/(42.7-35.2), -3.0/(22.2-7.4), -14.1/(42.7-35.2), -26.3/(22.2-7.4), 0.3/(42.7-35.2), -2.7/(22.2-7.4), -1.9/(42.7-35.2), -1.3/(22.2-7.4), 1.1/(42.7-35.2), 5/(22.2-7.4)),
+       ci.lb=c(-14.2/(42.7-35.2), -8.8/(22.2-7.4), -26.5/(42.7-35.2), -37.6/(22.2-7.4), -2.0/(42.7-35.2), -5.3/(22.2-7.4), -5.8/(42.7-35.2), -5.1/(22.2-7.4), -0.8/(42.7-35.2), 3.0/(22.2-7.4)),
+       ci.ub=c(-1.6/(42.7-35.2), 2.7/(22.2-7.4), -1.7/(42.7-35.2), -15.1/(22.2-7.4), 2.7/(42.7-35.2), -0.1/(22.2-7.4), 1.9/(42.7-35.2), 2.4/(22.2-7.4), 3.1/(42.7-35.2), 6.9/(22.2-7.4)),
+       xlim=c(-6,3),
        ylim=c(-1,20),
        rows=c(12,11,9,8,6,5,3,2,0,-1),
        slab=c(" Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"),
        xlab=c(expression(paste(plain(Delta),"Mortality per million"))),
        refline='NA')
 par(font=2)
-text(-12,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
+text(-6,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
 
 
-# APP FIG 4
-par(font=1)
-forest(c(-3.0/3.2, -20.1/11.2,1.5/3.2,-47.8/11.2, 0.1/3.2,-4.1/11.2, -0.9/3.2,-14.5/11.2, -0.1/3.2,0.4/11.2),
-       ci.lb=c(-5/3.2, -25.7/11.2, -3.3/3.2, -59.5/11.2, -0.8/3.2, -6.5/11.2, -2.1/3.2, -18/11.2, -.2/3.2, .3/11.2),
-       ci.ub=c(-1.1/3.2, -14.6/11.2, 6.3/3.2, -36.2/11.2, 1/3.2, -1.7/11.2, 0.4/3.2, -10.9/11.2, -.01/3.2, .5/11.2),
-       xlim=c(-8,5),
-       ylim=c(-1,20),
-       rows=c(12,11,9,8,6,5,3,2,0,-1),
-       slab=c(" Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"," Primary care"," Non-primary care"),
-       xlab=c(expression(paste(plain(Delta),"Mortality per million"))),
-       refline='NA')
-par(font=2)
-text(-8,c(13,10,7,4,1),pos=4,c("Cancer","Cardiovascular","Infectious","Respiratory","Substance/injury"))
+
+
+# APP FIG 3
+
+plot(counties_data$pcchange,counties_data$specchange)
+cor(counties_data$pcchange,counties_data$specchange, use = "complete.obs", method = c("pearson"))
+
+
+
+
+
+
+
+
+
+
