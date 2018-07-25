@@ -1,4 +1,5 @@
-
+library(tidyverse)
+library(readxl)
 # Download raw IHME subst files ---------------------------------------
 # See https://github.com/BuzzFeedNews/2017-05-us-health-substre/blob/master/index.Rmd
 
@@ -14,7 +15,7 @@ list.files("data-raw/county")
 
 raw_src = "data-raw/county/IHME_USA_COUNTY_USE_INJ_MORTALITY_1980_2014_NATIONAL_Y2018M03D13.XLSX" # Raw data
 
-subst_us <- read_excel(raw_src, sheet = 2, skip = 3, col_names = FALSE) %>%
+subst_us <- read_excel(raw_src, sheet = 1, skip = 3, col_names = FALSE) %>%
   select(1:10)
 names(subst_us) <- c("place","fips","subst_1980","subst_1985","subst_1990","subst_1995","subst_2000","subst_2005","subst_2010","subst_2014")
 subst_us2 <- read_excel(raw_src, sheet = 2, skip = 3, col_names = FALSE) %>%
@@ -79,7 +80,7 @@ dc <- data_frame("District of Columbia", "DC")
 names(dc) <- c("state","abb")
 states <- bind_rows(states,dc) 
 
-counties_clean_tot = counties_clean#+counties_clean2+counties_clean3+counties_clean4
+counties_clean_tot = counties_clean+counties_clean2+counties_clean3+counties_clean4
 
 # Join that to the counties' names, states, and FIPS codes ---------------------------------------
 states_names <- subst_counties %>%
@@ -104,6 +105,8 @@ save(subst_counties,file="subst_counties")
 
 
 
+# Organize into panel data  ---------------------------------------
+
 rm(list=ls())
 library(tidyverse)
 setwd("~/Data/ahrf")
@@ -121,15 +124,15 @@ ahrf_county %>%
   select(county = F04437, 
          fips = F00002, 
          gim_2005 = `F11209-05`, #    Gnrl Int Med, PC, Office Based 
-         tgp_2005 = `F08860-05`, #    MD's, Tot Gen Pract, PC,Off Bsd 
+         fp_2005 = `F08860-05`, #    MD's, Tot Gen Pract, PC,Off Bsd 
          ped_2005 = `F11706-05`, #    Peds, Tot PC, Off Bsd
          pop_2005 = `F11984-05`, 
          gim_2010 = `F11209-10`,
-         tgp_2010 = `F08860-10`,
+         fp_2010 = `F08860-10`,
          ped_2010 = `F11706-10`,
          pop_2010 = `F04530-10`, 
          gim_2015 = `F11209-15`,
-         tgp_2015 = `F08860-15`,
+         fp_2015 = `F08860-15`,
          ped_2015 = `F11706-15`,
          pop_2015 = `F11984-15`,
          urb_2013 = `F00020-13`, #  Rural-Urban Continuum Code     , See https://www.ers.usda.gov/data-products/rural-urban-continuum-codes/documentation/
@@ -162,29 +165,34 @@ ahrf_county %>%
          pov_2005 = `F13321-05`, #  Percent Persons in Poverty     ,  Census SAIPE             
          pov_2010 = `F13321-10`,
          pov_2015 = `F13321-15`,
-         spec_2005 = `F11215-05`, #        M.D.'s, Total Ptn Care Non-Fed                              ,  AMA Phys Master File     
-         spec_2010 = `F11215-10`,
-         spec_2015 = `F11215-15`, 
+         tot_2005 = `F11215-05`, #        M.D.'s, Total Ptn Care Non-Fed                              ,  AMA Phys Master File     
+         tot_2010 = `F11215-10`,
+         tot_2015 = `F11215-15`, 
          hobed_2005 = `F08921-05`, #  Hospital Beds                  ,  AHA Survey Database
          hobed_2010 = `F08921-10`, 
          hobed_2014 = `F08921-14`,
          unins_2010 = `F14751-10`, #  % <65 without Health Insurance ,  Census SAHIE             
          unins_2015 = `F15474-15`,
          mcare_2011 = `F15549-11`, #  Mdcre Enrllmnt, Agd & Dsbld Tot,  CMS Enroll Dashboard     
-         mcare_2015 = `F15549-15`
+         mcare_2015 = `F15549-15`,
+         homeval_2006 = `F14613-06`, # median home value
+         homeval_2011 = `F14613-11`
   ) %>% 
   mutate(pop_2005 = as.integer(pop_2005),
          pop_2010 = as.integer(pop_2010),
          pop_2015 = as.integer(pop_2015),
-         fp_2005 = as.integer(tgp_2005)/pop_2005*100000,
-         fp_2010 = as.integer(tgp_2010)/pop_2005*100000,
-         fp_2015 = as.integer(tgp_2015)/pop_2005*100000,
-         gim_2005 = as.integer(gim_2005)/pop_2005*100000,
-         gim_2010 = as.integer(gim_2010)/pop_2005*100000,
-         gim_2015 = as.integer(gim_2015)/pop_2005*100000,
-         pc_2005 = (as.integer(gim_2005)+ as.integer(tgp_2005)+ as.integer(ped_2005))/pop_2005*100000,  # PC providers per 10k pop
-         pc_2010 = (as.integer(gim_2010)+as.integer(tgp_2010)+ as.integer(ped_2010))/pop_2010*100000,
-         pc_2015 = (as.integer(gim_2015)+ as.integer(tgp_2015)+as.integer(ped_2015))/pop_2015*100000,
+         fp_2005 = as.integer(fp_2005),
+         fp_2010 = as.integer(fp_2010),
+         fp_2015 = as.integer(fp_2015),
+         gim_2005 = as.integer(gim_2005),
+         gim_2010 = as.integer(gim_2010),
+         gim_2015 = as.integer(gim_2015),
+         ped_2005 = as.integer(ped_2005),
+         ped_2010 = as.integer(ped_2010),
+         ped_2015 = as.integer(ped_2015),
+         pc_2005 = (as.integer(gim_2005)+as.integer(fp_2005)+as.integer(ped_2005))/pop_2005*100000,  # PC providers per 100k pop
+         pc_2010 = (as.integer(gim_2010)+as.integer(fp_2010)+as.integer(ped_2010))/pop_2010*100000,
+         pc_2015 = (as.integer(gim_2015)+as.integer(fp_2015)+as.integer(ped_2015))/pop_2015*100000,
          inc_2005 = as.integer(inc_2005)*1.38, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1&year1=200001&year2=201501
          inc_2010 = as.integer(inc_2010)*1.23, # adjust for inflation to 2015 USD, see https://data.bls.gov/cgi-bin/cpicalc.pl?cost1=1.00&year1=200501&year2=201501
          inc_2015 = as.integer(inc_2015),
@@ -197,8 +205,8 @@ ahrf_county %>%
          eld_2005 = as.integer(eld_2005)/as.integer(pop_2005)*100, # as %age
          eld_2010 = as.integer(eld_2010)/as.integer(pop_2010)*100,
          eld_2015 = as.integer(eld_2015)/as.integer(pop_2015)*100,
-         fem_2005 = as.integer(fem_2005)/as.integer(pop_2005)*100, # as %age
          fem_2010 = (as.integer(fem_2005)+as.integer(fem_2015))/2/as.integer(pop_2010)*100, # linear interp
+         fem_2005 = as.integer(fem_2005)/as.integer(pop_2005)*100, # as %age
          fem_2015 = as.integer(fem_2015)/as.integer(pop_2015)*100,
          blk_2005 = (as.integer(blkm_2005)+as.integer(blkf_2005))/as.integer(pop_2005)*100,
          blk_2015 = (as.integer(blkm_2015)+as.integer(blkf_2015))/as.integer(pop_2015)*100,
@@ -215,18 +223,21 @@ ahrf_county %>%
          pov_2005 = as.integer(pov_2005)/10,
          pov_2010 = as.integer(pov_2010)/10,
          pov_2015 = as.integer(pov_2015)/10,
-         spec_2005 = ((as.integer(spec_2005))/pop_2005*100000)-pc_2005,
-         spec_2010 = ((as.integer(spec_2010))/pop_2010*100000)-pc_2010,
-         spec_2015 = ((as.integer(spec_2015))/pop_2015*100000)-pc_2015,
+         spec_2005 = ((as.integer(tot_2005))/pop_2005*100000)-pc_2005,
+         spec_2010 = ((as.integer(tot_2010))/pop_2010*100000)-pc_2010,
+         spec_2015 = ((as.integer(tot_2015))/pop_2015*100000)-pc_2015,
+         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*100000,
          hobed_2005 = as.integer(hobed_2005)/pop_2005*100000,
          hobed_2010 = as.integer(hobed_2010)/pop_2010*100000,
-         hobed_2015 = (as.integer(hobed_2014)+1/4*(as.integer(hobed_2014)-as.integer(hobed_2010)))/pop_2015*100000,
          unins_2005 = (as.integer(unins_2010)-(as.integer(unins_2015)-as.integer(unins_2010)))/10,
          unins_2010 = as.integer(unins_2010)/10,
          unins_2015 = as.integer(unins_2015)/10,
          mcare_2005 = (as.integer(mcare_2011)-6/4*(as.integer(mcare_2015)-as.integer(mcare_2011)))/pop_2005*100,
          mcare_2010 = (as.integer(mcare_2011)-1/4*(as.integer(mcare_2015)-as.integer(mcare_2011)))/pop_2010*100,
-         mcare_2015 = as.integer(mcare_2015)/pop_2015*100
+         mcare_2015 = as.integer(mcare_2015)/pop_2015*100,
+         homeval_2005 = as.integer(homeval_2006)*1.18-0.2*(as.integer(homeval_2011)*1.06-as.integer(homeval_2006)*1.18), # linear interp w/ CPI adjustment to 2015 $US
+         homeval_2010 = as.integer(homeval_2011)*1.06-0.2*(as.integer(homeval_2011)*1.06-as.integer(homeval_2006)*1.18),
+         homeval_2015 = as.integer(homeval_2011)*1.06+0.8*(as.integer(homeval_2011)*1.06-as.integer(homeval_2006)*1.18)
   ) -> ahrf_county
 ahrf_county[ahrf_county<0]=0
 #lapply(ahrf_county, summary)
@@ -240,6 +251,9 @@ ahrf_county <- ahrf_county %>%
          gim_2005,
          gim_2010,
          gim_2015,
+         ped_2005,
+         ped_2010,
+         ped_2015,
          pc_2005,
          pc_2010,
          pc_2015,
@@ -284,7 +298,14 @@ ahrf_county <- ahrf_county %>%
          unins_2015,
          mcare_2005,
          mcare_2010,
-         mcare_2015)
+         mcare_2015,
+         homeval_2005,
+         homeval_2010,
+         homeval_2015,
+         tot_2005,
+         tot_2010,
+         tot_2015)
+
 
 # Join data to the AHRF subset ----
 counties_data <- left_join(ahrf_county,subst_counties, by=c("fips"="fips"))
@@ -295,53 +316,80 @@ counties_data <- left_join(counties_data,ctyurb, by=c("fips"="fips"))
 counties_data
 
 # Join data to CHRD files ----
-counties_data <- left_join(counties_data,chrd, by=c("fips"="fips"))
+counties_data <- left_join(counties_data,chrd, by=c("fips"="fipscode"))
 counties_data
 
 #lapply(counties_data,summary)
 
 paneldata = counties_data
 paneldata = paneldata %>%
-  select(-one_of("fips","fipscode"))
+  select(-one_of("fips"))
 
-# Reshape wide to long; note that guam and puerto rico don't have LE available and make up most of the NA's, so need to exclude them when counting NA's for 50 states+DC ----
+# Reshape wide to long; note that guam and puerto rico don't have subst available and make up most of the NA's, so need to exclude them when counting NA's for 50 states+DC ----
 paneldata = data.frame(paneldata)
-panel = reshape(paneldata, varying =dput(names(paneldata[,2:76])),
+panel = reshape(paneldata, varying =dput(names(paneldata[,2:dim(paneldata)[2]])),
                 direction="long",idvar="county",sep="_")
 
 
+plot(panel$pc,panel$subst)
+plot(log(panel$pc),(panel$subst), xlab = "Log (# of primary care physicians/10k pop)", ylab = "Age-adjusted life expectancy at birth (years)")
+
+
+save(panel,file="pcpanel")
+save(paneldata,file="pcpaneldata")
+
+
+
+
+# descriptive stats ----
+rm(list=ls())
+library(tidyverse)
+library(stargazer)
+setwd("~/Data/ahrf")
+load("~/Data/ahrf/pcpanel")
+load("~/Data/ahrf/pcpaneldata")
+
 panel$tot = panel$pc + panel$spec
-panel05 = panel[,2:28]
+panel05 = panel[,2:dim(panel)[2]]
 panel05 = panel05[panel05$time==2005,]
-panel15 = panel[,2:28]
+panel10 = panel[,2:dim(panel)[2]]
+panel10 = panel10[panel10$time==2010,]
+panel15 = panel[,2:dim(panel)[2]]
 panel15 = panel15[panel15$time==2015,]
 paneldiff = panel15-panel05
-tableone05 = matrix(0,nrow=27,ncol=3)
-tableone15 = matrix(0,nrow=27,ncol=3)
-tableoned = matrix(0,nrow=27,ncol=3)
+tableone05 = matrix(0,nrow=dim(panel)[2]-1,ncol=3)
+tableone10 = matrix(0,nrow=dim(panel)[2]-1,ncol=3)
+tableone15 = matrix(0,nrow=dim(panel)[2]-1,ncol=3)
+tableoned = matrix(0,nrow=dim(panel)[2]-1,ncol=3)
 
-for (i in 1:27){
+for (i in 1:(dim(panel)[2]-1)){
   tableone05[i,1:3] = c(mean(na.omit(panel05[,i])),quantile(panel05[,i],na.rm=T,c(.025,.975))[1],quantile(panel05[,i],na.rm=T,c(.025,.975))[2])
+  tableone10[i,1:3] = c(mean(na.omit(panel10[,i])),quantile(panel10[,i],na.rm=T,c(.025,.975))[1],quantile(panel10[,i],na.rm=T,c(.025,.975))[2])
   tableone15[i,1:3] = c(mean(na.omit(panel15[,i])),quantile(panel15[,i],na.rm=T,c(.025,.975))[1],quantile(panel15[,i],na.rm=T,c(.025,.975))[2])
   tableoned[i,1:3] = c(mean(na.omit(paneldiff[,i])),quantile(paneldiff[,i],na.rm=T,c(.025,.975))[1],quantile(paneldiff[,i],na.rm=T,c(.025,.975))[2])
 }
 colnames(panel05)
-tableone05
-tableone15
-tableoned
+table05=cbind(colnames(panel05),tableone05)
+table10=cbind(colnames(panel10),tableone10)
+table15=cbind(colnames(panel15),tableone15)
+tabled = cbind(colnames(paneldiff),tableoned)
+
+stargazer(table05,type="text")
+stargazer(table10,type="text")
+stargazer(table15,type="text")
+stargazer(tabled,type="text")
 
 
-panel$rural = panel$urb>=5
-table(panel$rural[panel$time==2005])/length(panel$time==2005)
-table(panel$rural[panel$time==2015])/length(panel$time==2015)
-panel$ruralchange = panel$rural[panel$time==2015]-panel$rural[panel$time==2005]
-summary(panel$ruralchange)
-quantile(panel$ruralchange,c(.025,.975),na.rm=T)
+sum(na.omit(panel$pc[panel$time==2005]==0))
+sum(na.omit(panel$pc[panel$time==2015]==0))
+
+sum(na.omit(panel$pc[panel$time==2005]>100))
+sum(na.omit(panel$pc[panel$time==2015]>100))
 
 pc_gainloss = (panel$pc[panel$time==2015]-panel$pc[panel$time==2005])
 summary(pc_gainloss)
-summary(pc_gainloss[panel$urb<5])
-summary(pc_gainloss[panel$urb>=5])
+summary(pc_gainloss[panel$urb==0])
+summary(pc_gainloss[panel$urb==1])
 summary(pc_gainloss[panel$pov<16])
 summary(pc_gainloss[panel$pov>=16])
 summary(pc_gainloss[panel$blk<9])
@@ -350,8 +398,8 @@ summary(pc_gainloss[panel$his<8])
 summary(pc_gainloss[panel$his>=8])
 
 quantile(pc_gainloss,c(.025,.975),na.rm=T)
-quantile(pc_gainloss[panel$urb<5],c(.025,.975),na.rm=T)
-quantile(pc_gainloss[panel$urb>=5],c(.025,.975),na.rm=T)
+quantile(pc_gainloss[panel$urb==0],c(.025,.975),na.rm=T)
+quantile(pc_gainloss[panel$urb==1],c(.025,.975),na.rm=T)
 quantile(pc_gainloss[panel$pov<16],c(.025,.975),na.rm=T)
 quantile(pc_gainloss[panel$pov>=16],c(.025,.975),na.rm=T)
 quantile(pc_gainloss[panel$blk<9],c(.025,.975),na.rm=T)
@@ -359,10 +407,34 @@ quantile(pc_gainloss[panel$blk>=9],c(.025,.975),na.rm=T)
 quantile(pc_gainloss[panel$his<8],c(.025,.975),na.rm=T)
 quantile(pc_gainloss[panel$his>=8],c(.025,.975),na.rm=T)
 
+pcn_gainloss = (panel$fp[panel$time==2015]-panel$fp[panel$time==2005])+
+  (panel$gim[panel$time==2015]-panel$gim[panel$time==2005])+
+  (panel$ped[panel$time==2015]-panel$ped[panel$time==2005])
+summary(pcn_gainloss)
+summary(pcn_gainloss[panel$urb==0])
+summary(pcn_gainloss[panel$urb==1])
+summary(pcn_gainloss[panel$pov<16])
+summary(pcn_gainloss[panel$pov>=16])
+summary(pcn_gainloss[panel$blk<9])
+summary(pcn_gainloss[panel$blk>=9])
+summary(pcn_gainloss[panel$his<8])
+summary(pcn_gainloss[panel$his>=8])
+
+quantile(pcn_gainloss,c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$urb==0],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$urb==1],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$pov<16],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$pov>=16],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$blk<9],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$blk>=9],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$his<8],c(.025,.975),na.rm=T)
+quantile(pcn_gainloss[panel$his>=8],c(.025,.975),na.rm=T)
+
+
 spec_gainloss = (panel$spec[panel$time==2015]-panel$spec[panel$time==2005])
 summary(spec_gainloss)
-summary(spec_gainloss[panel$urb<5])
-summary(spec_gainloss[panel$urb>=5])
+summary(spec_gainloss[panel$urb==0])
+summary(spec_gainloss[panel$urb==1])
 summary(spec_gainloss[panel$pov<16])
 summary(spec_gainloss[panel$pov>=16])
 summary(spec_gainloss[panel$blk<9])
@@ -371,8 +443,8 @@ summary(spec_gainloss[panel$his<8])
 summary(spec_gainloss[panel$his>=8])
 
 quantile(spec_gainloss,c(.025,.975),na.rm=T)
-quantile(spec_gainloss[panel$urb<5],c(.025,.975),na.rm=T)
-quantile(spec_gainloss[panel$urb>=5],c(.025,.975),na.rm=T)
+quantile(spec_gainloss[panel$urb==0],c(.025,.975),na.rm=T)
+quantile(spec_gainloss[panel$urb==1],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$pov<16],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$pov>=16],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$blk<9],c(.025,.975),na.rm=T)
@@ -380,10 +452,44 @@ quantile(spec_gainloss[panel$blk>=9],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$his<8],c(.025,.975),na.rm=T)
 quantile(spec_gainloss[panel$his>=8],c(.025,.975),na.rm=T)
 
+specn_gainloss = (panel$tot[panel$time==2015]-panel$pc[panel$time==2015])-
+  (panel$tot[panel$time==2005]-panel$pc[panel$time==2005])
+summary(specn_gainloss)
+summary(specn_gainloss[panel$urb==0])
+summary(specn_gainloss[panel$urb==1])
+summary(specn_gainloss[panel$pov<16])
+summary(specn_gainloss[panel$pov>=16])
+summary(specn_gainloss[panel$blk<9])
+summary(specn_gainloss[panel$blk>=9])
+summary(specn_gainloss[panel$his<8])
+summary(specn_gainloss[panel$his>=8])
+
+quantile(specn_gainloss,c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$urb==0],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$urb==1],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$pov<16],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$pov>=16],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$blk<9],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$blk>=9],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$his<8],c(.025,.975),na.rm=T)
+quantile(specn_gainloss[panel$his>=8],c(.025,.975),na.rm=T)
+
+
+cor.test(pc_gainloss,spec_gainloss)
+cor.test(pcn_gainloss,specn_gainloss)
+
 
 # center and scale ----
+rm(list=ls())
+library(tidyverse)
 library(plm)
+library(lme4)
 library(stargazer)
+setwd("~/Data/ahrf")
+load("~/Data/ahrf/pcpanel")
+load("~/Data/ahrf/pcpaneldata")
+
+panel$tot = panel$pc + panel$spec
 
 zpanel = panel
 zpanel$fp = log(zpanel$fp+1)
@@ -406,11 +512,20 @@ zpanel$mcare = log(zpanel$mcare+1)
 zpanel$obese = log(zpanel$obese)
 zpanel$tot = log(zpanel$tot+1)
 zpanel$tob = log(zpanel$tob)
+zpanel$homeval = log(zpanel$homeval+1)
 
+exp(mean(na.omit(log(panel$tot+1))))-exp(sd(na.omit(log(panel$tot+1))))
+exp(mean(na.omit(log(panel$tot+1))))+exp(sd(na.omit(log(panel$tot+1))))
+exp(mean(na.omit(log(panel$pc+1))))-exp(sd(na.omit(log(panel$pc+1))))
+exp(mean(na.omit(log(panel$pc+1))))+exp(sd(na.omit(log(panel$pc+1))))
+exp(mean(na.omit(log(panel$spec+1))))-exp(sd(na.omit(log(panel$spec+1))))
+exp(mean(na.omit(log(panel$spec+1))))+exp(sd(na.omit(log(panel$spec+1))))
 exp(mean(na.omit(log(panel$pov))))-exp(sd(na.omit(log(panel$pov))))
 exp(mean(na.omit(log(panel$pov))))+exp(sd(na.omit(log(panel$pov))))
 exp(mean(na.omit(log(panel$ed+1))))-exp(sd(na.omit(log(panel$ed+1))))
 exp(mean(na.omit(log(panel$ed+1))))+exp(sd(na.omit(log(panel$ed+1))))
+exp(mean(na.omit(log(panel$fem))))-exp(sd(na.omit(log(panel$fem))))
+exp(mean(na.omit(log(panel$fem))))+exp(sd(na.omit(log(panel$fem))))
 exp(mean(na.omit(log(panel$blk+1))))-exp(sd(na.omit(log(panel$blk+1))))
 exp(mean(na.omit(log(panel$blk+1))))+exp(sd(na.omit(log(panel$blk+1))))
 exp(mean(na.omit(log(panel$his+1))))-exp(sd(na.omit(log(panel$his+1))))
@@ -429,6 +544,8 @@ exp(mean(na.omit(log(panel$obese))))-exp(sd(na.omit(log(panel$obese))))
 exp(mean(na.omit(log(panel$obese))))+exp(sd(na.omit(log(panel$obese))))
 exp(mean(na.omit(log(panel$poll+1))))-exp(sd(na.omit(log(panel$poll+1))))
 exp(mean(na.omit(log(panel$poll+1))))+exp(sd(na.omit(log(panel$poll+1))))
+exp(mean(na.omit(log(panel$homeval+1))))-exp(sd(na.omit(log(panel$homeval+1))))
+exp(mean(na.omit(log(panel$homeval+1))))+exp(sd(na.omit(log(panel$homeval+1))))
 
 
 zpanel$fp = (zpanel$fp-mean(na.omit(zpanel$fp)))/(2*sd(na.omit(zpanel$fp)))
@@ -451,79 +568,65 @@ zpanel$mcare = (zpanel$mcare-mean(na.omit(zpanel$mcare)))/(2*sd(na.omit(zpanel$m
 zpanel$obese = (zpanel$obese-mean(na.omit(zpanel$obese)))/(2*sd(na.omit(zpanel$obese)))
 zpanel$tob = (zpanel$tob-mean(na.omit(zpanel$tob)))/(2*sd(na.omit(zpanel$tob)))
 zpanel$inc = (zpanel$inc-mean(na.omit(zpanel$inc)))/(2*sd(na.omit(zpanel$inc)))
+zpanel$homeval = (zpanel$homeval-mean(na.omit(zpanel$homeval)))/(2*sd(na.omit(zpanel$homeval)))
 
-zpanel$urb = zpanel$urb>=5
 zpanel$subst = zpanel$subst*10
 
 
-# address collinearity with VIFs----
-# paneltest = (panel[complete.cases(panel),])
-# paneltest = data.frame(paneltest[,3:25])
-# x = as.matrix(paneltest[,1:15,17:23])
-# y = as.matrix(paneltest[,16])
-# library(mctest)
-# omcdiag(x,y)
-# imcdiag(x,y)
-# 
-# library(olsrr)
-# testmodel = lm(le~.,
-#                data = panel)
-# ols_vif_tol(testmodel)
-# 
-# testmodel = lm(le~pc+
-#                  urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec,
-#                data = panel)
-# ols_vif_tol(testmodel)
 
-# Regressions  ----
-
-library(lme4)
-
-
-
-reg_base = (lmer(subst~pc+spec+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob + (1+pc| county)+ (1|time) ,
+reg_base = (lmer(subst~pc+spec+urb+pov+ed+fem+blk+his+unemp+hobed+mcare+medct+tob+obese+poll+homeval+ (1+pc| county)+ (1|time) ,
                  data = zpanel))
-summary(reg_base)
-confint(reg_base,method="Wald")
+stargazer(reg_base,type="text",style="asq",single.row=T,
+          ci = T,digits=1,
+          ci.level = 0.95)
+summary(reg_base)$coefficients[2]/(hipc-lopc)
+summary(reg_base)$coefficients[3]/(hispec-lospec)
+
+lopc=exp(mean(na.omit(log(panel$pc+1))))-exp(sd(na.omit(log(panel$pc+1))))
+hipc=exp(mean(na.omit(log(panel$pc+1))))+exp(sd(na.omit(log(panel$pc+1))))
+lopc
+hipc
+
+confint(reg_base,method="Wald")[7]/(hipc-lopc)
+confint(reg_base,method="Wald")[29]/(hipc-lopc)
+
+confint(reg_base,method="Wald")[8]/(hispec-lospec)
+confint(reg_base,method="Wald")[30]/(hispec-lospec)
 
 
 
 
-# Sensitivity analyses ----------
-
-paneltest = pdata.frame(zpanel,index = c("county","time"))
-mylag <- function(x,lag) {
-  c(rep(NA,lag),head(x,-lag))
-}
-dd=transform(paneltest,lagpc1=mylag(pc,1))
-dd$pc[dd$time==2005]='NA'
-
-reg_mel = (lmer(subst~lagpc1+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+lagpc1| county)+ (1|time) ,
-                data = dd))
-summary(reg_mel)
-confint(reg_mel,method="Wald") 
-
-
-reg_meu = lmer(subst~pc+urb+pc*urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
-               data = zpanel)
-summary(reg_meu)
-confint(reg_meu,method="Wald")
+# Interaction analyses ----------
 
 
 
-reg_melp = lmer(subst~pc+pc*pov+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+
+reg_melu = lmer(subst~pc+pc*urb+spec+urb+pov+ed+fem+blk+his+unemp+hobed+mcare+medct+tob+obese+poll+homeval + (1+pc| county)+ (1|time) ,
                 data = zpanel)
-summary(reg_melp)
-confint(reg_melp,method="Wald")
+stargazer(reg_melu,type="text",style="asq",single.row=T,
+          ci = T,digits=1,
+          ci.level = 0.95)
 
 
-reg_melb = lmer(subst~pc+pc*blk+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+reg_melp = lmer(subst~pc+pc*pov+spec+urb+pov+ed+fem+blk+his+unemp+hobed+mcare+medct+tob+obese+poll+homeval + (1+pc| county)+ (1|time) ,
                 data = zpanel)
-summary(reg_melb)
-confint(reg_melb,method="Wald")
+stargazer(reg_melp,type="text",style="asq",single.row=T,
+          ci = T,digits=1,
+          ci.level = 0.95)
 
 
-reg_melh = lmer(subst~pc+pc*his+urb+ed+medct+fem+blk+his+unemp+poll+pov+hobed+mcare+obese+tob+spec + (1+pc| county)+ (1|time) ,
+reg_melb = lmer(subst~pc+pc*blk+spec+urb+pov+ed+fem+blk+his+unemp+hobed+mcare+medct+tob+obese+poll+homeval + (1+pc| county)+ (1|time) ,
                 data = zpanel)
-summary(reg_melh)
-confint(reg_melh,method="Wald")
+stargazer(reg_melb,type="text",style="asq",single.row=T,
+          ci = T,digits=1,
+          ci.level = 0.95)
+
+
+reg_melh = lmer(subst~pc+pc*his+spec+urb+pov+ed+fem+blk+his+unemp+hobed+mcare+medct+tob+obese+poll+homeval + (1+pc| county)+ (1|time) ,
+                data = zpanel)
+stargazer(reg_melh,type="text",style="asq",single.row=T,
+          ci = T,digits=1,
+          ci.level = 0.95)
+
+
+
